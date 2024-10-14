@@ -14,7 +14,10 @@ gridsize:    .byte 8,8  # Denote walls using '#'
 character:   .byte 0,0  # Denote using '@'
 box:         .byte 0,0  # Denote using '*'
 target:      .byte 0,0  # Denote using 'X'
-board_state: .string "" # This will be constantly updated
+empty_space: .string " "
+newline:     .string "\n"
+
+
 
 .text
 .globl _start
@@ -64,12 +67,13 @@ _start:
     # consider whether you want to place this string in static memory or 
     # on the stack.
 
+
     # Legend:
     # - Denote walls using '#'
     # - Denote the character using '@'
     # - Denote boxes using '*'
     # - Denote targets using 'X'
-    
+
 
     
 
@@ -148,6 +152,82 @@ modify_byte_array:
 
     # Return to $ra
     jr ra
+
+
+# Prints the current board state to the console
+print_board_state:
+    # Store board size:
+    lb a0, 0(gridsize)
+
+    # Take note of the current coordinate, starting at (0, 0)
+    li t0, 0
+    li t1, 0
+
+    # Before the loop which prints the board, print the column numbers:
+    jal print_column_numbers
+    # First loop - all rows
+    FIRST_WHILE:
+        bge t1, t2, EXIT_FIRST  # continue if y-coord in [0, gridsize - 1]
+
+        # Before printing across, print the current row number:
+        mv a0, t1  # move the incrementor value into a0 for printing
+        li a7, 1  # prepare integer printing
+        ecall
+
+        # Second loop - tiles across columns, filling a row
+        SECOND_WHILE:
+            bge t0, t2, EXIT_SECOND  # continue if x-coord in [0, gridsize - 1]
+
+            # Prepare arguments representing the current tile position:
+            mv a0, t0
+            mv a1, t1
+            jal handle_tile_printing  # to print the object at the current tile
+
+            addi t0, t0, 1  # to increment the x-value
+            j SECOND_WHILE
+        EXIT_SECOND:
+            # Print a newline after completing this row's tiles
+            la a0, newline
+            li a7, 4
+            ecall
+        # After printing across, print the current row
+        mv a0, t1
+        li a7, 1
+        ecall
+
+        addi t1, t1, 1  # to increment the y-value
+        j FIRST_WHILE
+    EXIT_FIRST:
+    # After the while loop, print the column numbers.
+    jal print_column_numbers
+
+
+# Prints a row of just the numbers of each column.
+# Arguments: $a0, the grid size
+print_column_numbers:
+    li s1, 0  # loop accumulator
+
+    WHILE:
+        bge s1, a0, EXIT_WHILE
+        
+        li a7, 1  # prepare integer printing
+        mv a0, s1  # move the loop accumulator into a0 for printing
+        ecall
+
+        addi s1, s1, 1  # increment loop accumulator
+        j WHILE
+    EXIT_WHILE:
+
+
+# Checks if the provided tile is empty, a character, wall, box, or target,
+# printing the corresponding object.
+# Arguments:
+# - $a0, the x-coord of the provided tile
+# - $a1, the y-coord of the provided tile
+handle_tile_printing:
+# TODO: DO THIS!
+
+
 
 
 ################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
