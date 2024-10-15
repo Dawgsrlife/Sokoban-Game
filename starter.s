@@ -10,13 +10,19 @@
 ##############################################################################
 
 .data
+# Game Setup and Object Coordinates:
 gridsize:    .byte 8,8  # Denote walls using '#'
 character:   .byte 0,0  # Denote using '@'
 box:         .byte 0,0  # Denote using '*'
 target:      .byte 0,0  # Denote using 'X'
-empty_space: .string " "
-newline:     .string "\n"
 
+# Predetermined Object String Representations:
+empty_space:    .string " "
+newline:        .string "\n"
+character_str:  .string "@"
+box_str:        .string "*"
+target_str:     .string "X"
+empty_tile:     .string "."
 
 
 .text
@@ -38,21 +44,25 @@ _start:
 
     # CHARACTER:
     # Obtain random values and keep them in $a0 and $a1:
+    la t6, gridsize
+    lb a0, 0(t6)  # Prepare the gridsize as the MAX for the function 
     jal generate_two_random_values
 
     # Modify the character byte array with $a0 and $a1, respectively:
     mv a2, a0  # put one of the random values as the third arg.
     # $a1 already contains another random int.
-    la a0, character 
+    la a0, character
     jal modify_byte_array
 
     # BOX (same logic):
+    lb a0, 0(t6)  # Prepare the gridsize as the MAX for the function
     jal generate_two_random_values
     mv a2, a0  # move one value into a2
     la a0, box
     jal modify_byte_array
 
     # TARGET (same logic):
+    lb a0, 0(t6)  # Prepare the gridsize as the MAX for the function
     jal generate_two_random_values
     mv a2, a0
     la a0, target
@@ -73,7 +83,7 @@ _start:
     # - Denote the character using '@'
     # - Denote boxes using '*'
     # - Denote targets using 'X'
-
+    jal print_board_state
 
     
 
@@ -126,7 +136,7 @@ generate_two_random_values:
 
     # Generating random numbers:
     jal notrand
-    mv a1, a0  # $a1 stores a random number
+    mv a3, a0  # $a3 stores a random number
     mv a0, t0  # move back MAX as an arg.
     jal notrand  # $a0 stores another random number
 
@@ -141,11 +151,11 @@ generate_two_random_values:
 # Modifies the values of the given byte:
 # Arguments:
 # - $a0 is the byte in memory
-# - $a1 is the new first element
+# - $a3 is the new first element
 # - $a2 is the new second element
 modify_byte_array:
     # Modify the first element:
-    sb a1, 0(a0)
+    sb a3, 0(a0)
 
     # Modify the second element:
     sb a2, 1(a0)
@@ -156,15 +166,23 @@ modify_byte_array:
 
 # Prints the current board state to the console
 print_board_state:
+    # This function calls at least one other function:
+    addi sp, sp, -4
+    sw ra, 0(sp)
+
     # Store board size:
-    lb a0, 0(gridsize)
+    lb a0, 1(t6)  # t6 stores the gridsize address
+    mv t2, a0  # also put the gridsize into $t2, num of columns
 
     # Take note of the current coordinate, starting at (0, 0)
-    li t0, 0
-    li t1, 0
+    li t1, 0  # loop incrementor for FIRST_WHILE
 
     # Before the loop which prints the board, print the column numbers:
     jal print_column_numbers
+    # Print a newline
+    la a0, newline
+    li a7, 4
+    ecall
     # First loop - all rows
     FIRST_WHILE:
         bge t1, t2, EXIT_FIRST  # continue if y-coord in [0, gridsize - 1]
@@ -174,6 +192,7 @@ print_board_state:
         li a7, 1  # prepare integer printing
         ecall
 
+        li t0, 0  # loop incrementor for SECOND_WHILE
         # Second loop - tiles across columns, filling a row
         SECOND_WHILE:
             bge t0, t2, EXIT_SECOND  # continue if x-coord in [0, gridsize - 1]
@@ -186,37 +205,53 @@ print_board_state:
             addi t0, t0, 1  # to increment the x-value
             j SECOND_WHILE
         EXIT_SECOND:
-            # Print a newline after completing this row's tiles
-            la a0, newline
-            li a7, 4
-            ecall
         # After printing across, print the current row
         mv a0, t1
         li a7, 1
         ecall
+        # Print a newline
+        la a0, newline
+        li a7, 4
+        ecall
+
 
         addi t1, t1, 1  # to increment the y-value
         j FIRST_WHILE
     EXIT_FIRST:
     # After the while loop, print the column numbers.
+    lb a0, 1(t6)  # restore the gridsize to $a0
     jal print_column_numbers
+    # Print a newline, twice
+    la a0, newline
+    li a7, 4
+    ecall
+    ecall
+
+    # Undo the stack pointer
+    lw ra, 0(sp)
+    addi sp, sp, 4
+    
+    # Return to the address of the original function call
+    jr ra
 
 
 # Prints a row of just the numbers of each column.
 # Arguments: $a0, the grid size
 print_column_numbers:
-    li s1, 0  # loop accumulator
+    li t3, 0  # loop accumulator
+    mv a2, a0  # stores the grid size
 
     WHILE:
-        bge s1, a0, EXIT_WHILE
+        bge t3, a2, EXIT_WHILE
         
         li a7, 1  # prepare integer printing
-        mv a0, s1  # move the loop accumulator into a0 for printing
+        mv a0, t3  # move the loop accumulator into a0 for printing
         ecall
 
-        addi s1, s1, 1  # increment loop accumulator
+        addi t3, t3, 1  # increment loop accumulator
         j WHILE
     EXIT_WHILE:
+    jr ra
 
 
 # Checks if the provided tile is empty, a character, wall, box, or target,
@@ -225,10 +260,57 @@ print_column_numbers:
 # - $a0, the x-coord of the provided tile
 # - $a1, the y-coord of the provided tile
 handle_tile_printing:
-# TODO: DO THIS!
+    # Compare to character
+    la t3, character
+    lb t4, 0(t3)
+    lb t5, 1(t3)
+    # Check if the character x- and y-values are the current
+    bne a0, t4, not_char
+    bne a1, t5, not_char
+    # Proceed to print the character if passes
+    la a0, character_str
+    li a7, 4  # prepare string printing
+    ecall
+    j done_tile  # jump to the end of funct.
 
+    not_char:
+    # Compare to box
+    la t3, box
+    lb t4, 0(t3)
+    lb t5, 1(t3)
+    # Check if the box x- and y-values are the current
+    bne a0, t4, not_box
+    bne a1, t5, not_box
+    # Proceed to print the box if passes
+    la a0, box_str
+    li a7, 4
+    ecall
+    j done_tile  # jump to the end of funct.
+    
+    not_box:
+    # Compare to target
+    la t3, target
+    lb t4, 0(t3)
+    lb t5, 1(t3)
+    # Check if the target x- and y-values are the current
+    bne a0, t4, not_target
+    bne a1, t5, not_target
+    # Proceed to print the target if passes
+    la a0, target_str
+    li a7, 4
+    ecall
+    j done_tile
+    
+    not_target:
+    # Print the empty tile
+    la t3, empty_tile
+    mv a0, t3
+    li a7, 4
+    ecall
+    # fall-through
 
-
+    done_tile:
+    jr ra  # jump back to the return address of this function call
 
 ################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
 
