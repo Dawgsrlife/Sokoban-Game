@@ -24,7 +24,6 @@ box_str:        .string "*"
 target_str:     .string "X"
 empty_tile:     .string "."
 
-
 .text
 .globl _start
 
@@ -41,31 +40,47 @@ _start:
 
 
     # Finding a random position for the character, box, and target:
+    # Setup:
+    la t6, gridsize
+    lb t0, 0(t6)  # Prepare the MAX rows
+    lb t1, 1(t6)  # Prepare the MAX columns
 
     # CHARACTER:
     # Obtain random values and keep them in $a0 and $a1:
-    la t6, gridsize
-    lb a0, 0(t6)  # Prepare the gridsize as the MAX for the function 
+    mv a0, t0  # arg. 1: MAX rows
+    mv a1, t1  # arg. 2: MAX cols
     jal generate_two_random_values
 
-    # Modify the character byte array with $a0 and $a1, respectively:
-    mv a2, a0  # put one of the random values as the third arg.
-    # $a1 already contains another random int.
-    la a0, character
+    # Modify the character byte array with the valid RNG values
+    la a0, character  # load the character coords as the first arg.
     jal modify_byte_array
 
-    # BOX (same logic):
-    lb a0, 0(t6)  # Prepare the gridsize as the MAX for the function
+    # BOX (need to avoid overlapping coords with CHARACTER):
+
+    # TODO: ensure that generated coords aren't overlapping
+    # with previously generated coords
+
+    # Prepare MAX rows and MAX cols
+    mv a0, t0
+    mv a1, t1
     jal generate_two_random_values
-    mv a2, a0  # move one value into a2
-    la a0, box
+
+    # Modify the box byte array with the valid RNG values
+    la a0, box  # load the box coords as the first arg.
     jal modify_byte_array
 
-    # TARGET (same logic):
-    lb a0, 0(t6)  # Prepare the gridsize as the MAX for the function
+    # TARGET:
+
+    # TODO: ensure that generated coords aren't overlapping
+    # with previously generated coords
+
+    # Prepare MAX rows and MAX cols
+    mv a0, t0
+    mv a1, t1
     jal generate_two_random_values
-    mv a2, a0
-    la a0, target
+
+    # Modify the target byte array with the valid RNG values
+    la a0, target  # load the target coords as the first arg.
     jal modify_byte_array
    
     # TODO: Now, print the gameboard. Select symbols to represent the walls,
@@ -124,21 +139,28 @@ notrand:
 
 
 # Obtain random values and keep them in $a0 and $a1:
-# Arguments: an integer MAX in $a0
-# Returns: Two numbers from 0 (inclusive) to MAX (exclusive), in $a0 and $a1
+# Arguments: MAX number of rows in $a0 and MAX number of columns in $a1
+# Returns:
+# - In $a1: a random row between 0 (inclusive) and MAX rows (exclusive)
+# - In $a2: a random row between 0 (inclusive) and MAX cols (exclusive)
 # Note: This function calls another function, so store $ra on the stack
 generate_two_random_values:
-    mv t0, a0  # $t0 also stores MAX, but so does $a0
+    mv t2, a1  # temp store MAX columns in $t2
 
     # Taking note of $ra:
     addi sp, sp, -4  # allocate 4 bytes on the stack
     sw ra, 0(sp)  # save the return address at the new $sp
 
     # Generating random numbers:
-    jal notrand
-    mv a3, a0  # $a3 stores a random number
-    mv a0, t0  # move back MAX as an arg.
-    jal notrand  # $a0 stores another random number
+    # $a0 currently stores MAX rows
+    jal notrand  # returns a random valid row in $a0
+    mv a3, a0  # put it temporarily into $a3 to avoid losing it
+
+    # $t2 currently stores MAX cols
+    mv a0, t2  # prepare $a0 = num of columns
+    jal notrand  # returns a random valid column; $a0 is MAX cols
+    mv a2, a0  # put it into $a2
+    mv a1, a3  # bring $a3 into $a1 to match returns
 
     # Grabbing the original $ra:
     lw ra, 0(sp)  # restore the original $ra from the stack
@@ -146,6 +168,11 @@ generate_two_random_values:
 
     # Returning to the original ra:
     jr ra
+
+
+ensure_unique_coordinates:
+    RNG_LOOP:
+        # TODO: COMPLETE THIS!
 
 
 # Modifies the values of the given byte:
