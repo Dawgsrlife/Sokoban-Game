@@ -171,42 +171,42 @@ print_board_state:
     sw ra, 0(sp)
 
     # Store board size:
-    lb a0, 1(t6)  # t6 stores the gridsize address
-    mv t2, a0  # also put the gridsize into $t2, num of columns
+    # $t6 currently stores the gridsize address
+    lb t2, 0(t6)  # $t2 refers to the number of rows
+    lb a0, 1(t6)  # $a0 refers to the number of columns
+    mv t6, a0  # make $t6 also refer to the number of columns
 
-    # Take note of the current coordinate, starting at (0, 0)
-    li t1, 0  # loop incrementor for FIRST_WHILE
+    # Initialize the row counter
+    li t0, 0  # loop incrementor for FIRST_WHILE
 
     # Before the loop which prints the board, print the column numbers:
     jal print_column_numbers
-    # Print a newline
-    la a0, newline
-    li a7, 4
-    ecall
+
     # First loop - all rows
     FIRST_WHILE:
-        bge t1, t2, EXIT_FIRST  # continue if y-coord in [0, gridsize - 1]
+        bge t0, t2, EXIT_FIRST  # continue if y-coord in [0, gridsize - 1]
 
         # Before printing across, print the current row number:
-        mv a0, t1  # move the incrementor value into a0 for printing
+        mv a0, t0  # move the incrementor value into $a0 for printing
         li a7, 1  # prepare integer printing
         ecall
 
-        li t0, 0  # loop incrementor for SECOND_WHILE
+        # Initialize the column counter
+        li t1, 0  # loop incrementor for SECOND_WHILE
         # Second loop - tiles across columns, filling a row
         SECOND_WHILE:
-            bge t0, t2, EXIT_SECOND  # continue if x-coord in [0, gridsize - 1]
+            bge t1, t6, EXIT_SECOND  # continue if x-coord in [0, gridsize - 1]
 
             # Prepare arguments representing the current tile position:
-            mv a0, t0
-            mv a1, t1
+            mv a0, t0  # arg: row number
+            mv a1, t1  # arg: col number
             jal handle_tile_printing  # to print the object at the current tile
 
-            addi t0, t0, 1  # to increment the x-value
+            addi t1, t1, 1  # to increment the current column
             j SECOND_WHILE
         EXIT_SECOND:
         # After printing across, print the current row
-        mv a0, t1
+        mv a0, t0
         li a7, 1
         ecall
         # Print a newline
@@ -215,22 +215,22 @@ print_board_state:
         ecall
 
 
-        addi t1, t1, 1  # to increment the y-value
+        addi t0, t0, 1  # to increment the current row
         j FIRST_WHILE
     EXIT_FIRST:
     # After the while loop, print the column numbers.
-    lb a0, 1(t6)  # restore the gridsize to $a0
+    mv a0, t6
     jal print_column_numbers
-    # Print a newline, twice
-    la a0, newline
-    li a7, 4
-    ecall
-    ecall
 
     # Undo the stack pointer
     lw ra, 0(sp)
     addi sp, sp, 4
     
+    # Print a newline
+    la a0, newline
+    li a7, 4
+    ecall
+
     # Return to the address of the original function call
     jr ra
 
@@ -251,14 +251,19 @@ print_column_numbers:
         addi t3, t3, 1  # increment loop accumulator
         j WHILE
     EXIT_WHILE:
+        # Print a newline
+        la a0, newline
+        li a7, 4
+        ecall
+
     jr ra
 
 
 # Checks if the provided tile is empty, a character, wall, box, or target,
 # printing the corresponding object.
 # Arguments:
-# - $a0, the x-coord of the provided tile
-# - $a1, the y-coord of the provided tile
+# - $a0, the row of the provided tile
+# - $a1, the column of the provided tile
 handle_tile_printing:
     # Compare to character
     la t3, character
