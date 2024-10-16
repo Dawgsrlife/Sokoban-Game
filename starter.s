@@ -11,18 +11,22 @@
 
 .data
 # Game Setup and Object Coordinates:
-gridsize:    .byte 8,8  # Denote walls using '#'
-character:   .byte 0,0  # Denote using '@'
-box:         .byte 0,0  # Denote using '*'
-target:      .byte 0,0  # Denote using 'X'
+gridsize:               .byte 8,8  # Denote walls using '#'
+character:              .byte 0,0  # Denote using '@'
+box:                    .byte 0,0  # Denote using '*'
+target:                 .byte 0,0  # Denote using 'X'
 
 # Predetermined Object String Representations:
-empty_space:    .string " "
-newline:        .string "\n"
-character_str:  .string "@"
-box_str:        .string "*"
-target_str:     .string "X"
-empty_tile:     .string "."
+empty_space:            .string " "
+newline:                .string "\n"
+character_str:          .string "@"
+box_str:                .string "*"
+target_str:             .string "X"
+empty_tile:             .string "."
+
+# Prompts
+move_prompt:            .string "\nMake your move! Left, Right, Up, or Down? (Use your WASD keys!): "
+invalid_prompt:         .string "\nWoah there, please use your WASD keys and try again!\n"
 
 .text
 .globl _start
@@ -114,6 +118,20 @@ _start:
     # indicate when the box is located in the same position as the target.
     # For the former, it may be useful for this loop to exist in a function,
     # to make it cleaner to exit the game loop.
+    GAME_LOOP:
+        # Take user input
+        li a7, 12
+        ecall
+
+        # Check if the user's input is valid, or if it results in no change
+
+        # If valid, update the gameboard state
+
+        # Then, print the gameboard state
+        
+
+        j GAME_LOOP
+
 
     # TODO: That's the base game! Now, pick a pair of enhancements and
     # consider how to implement them.
@@ -136,6 +154,213 @@ notrand:
     li a7, 32
     ecall             # sleeping to try to generate a different number
     jr ra
+
+
+# Runs the Sokoban game.
+run_game:
+    # Stash the return address
+    addi sp, sp, -4
+    sw ra, 0(sp)
+
+    # Grab a move from the user:
+    la a0, gridsize  # prepare the gridsize
+    la a1, move_prompt  # prepare the move prompt
+    jal verify_move_input_with_bound
+
+    # Update the gameboard state
+    jal handle_move_behaviour  # args. provided by prev. function call
+
+    # Then, print the gameboard state
+
+    # Retrieve the original return address
+    lw ra, 0(sp)
+    addi sp, sp, 4
+
+    # Return
+    jr ra
+
+
+# Takes user input indefinitely until receiving a move
+# which lies between 0 (inclusive) and MAX (exclusive)
+# Arguments:
+# - $a0, the address of the gridsize
+#   - $0(a0) is the upper row bound
+#   - $1(a0) is the upper column bound
+# - $a1, the prompt address to issue
+# Post-Conditions:
+# - The intended move yields a valid tile exactly 1 unit
+#   from the current tile.
+# Return: The move's row in $a1 and the move's column in $a2
+verify_move_input_with_bound:
+    # Stash the $ra
+    addi sp, sp, -4
+    sw ra, 0(sp)
+
+    lb t0, 0(a0)  # track the row bound
+    lb t1, 1(a0)  # track the col bound
+
+    # Grab the current player position:
+    la a2, character
+    lb a3, 0(a2)  # current row
+    lb a4, 1(a2)  # current col
+
+    # Take user input indefinitely
+    INPUT_LOOP:
+        # Take user input for this "iteration"
+        li a7, 4
+        mv a0, a1  # to prepare the prompt
+        ecall
+        
+        li a7, 12  # take char, stored in $a0
+        ecall
+
+        # Determine the resultant move
+        # $a0 stores the user input ASCII value
+        mv a1, a3  # prepare current row
+        mv a2, a4  # prepare current col
+        jal handle_move_direction
+        # $a1 and $a2 will store the intended move's coords
+
+        # Loop back if the user does not move with WASD:
+        # The previous function call would set $a0 to 0
+        bne a0, zero, VALID_MOVE
+        li a7, 4
+        la a0, invalid_prompt
+        ecall
+        j INPUT_LOOP  # loop back
+
+        VALID_MOVE:
+        # Now, ($a1, $a2) should represent the new coordinates
+        # of the user's intended move.
+
+        # Loop back if the intended move is not wihtin the bounds:
+        blt a1, zero, INPUT_LOOP  # lower bound for row
+        bgt a1, t0, INPUT_LOOP  # upper bound for row
+        blt a2, zero, INPUT_LOOP  # lower bound for col
+        bgt a2, t1, INPUT_LOOP  # upper bound for col
+
+        # If there is no loopback, then return the coords
+        # in $a1 and $a2.
+
+        # $t2 should still store the direction char ASCII
+
+    # Retrieve the $ra
+    lw ra, 0(sp)
+    addi sp, sp, 4
+
+    jr ra  # to return
+
+
+# Determines the resultant move and returns the corresponding coordinates.
+# Arguments:
+# - $a0, the move ASCII value
+# - $a1, the row number
+# - $a2, the column number
+# Return:
+# - $a0 becomes zero if $a0 wasn't originally one of WASD.
+# - The updated $a1 and $a2, representing the new coords from the move.
+handle_move_direction:
+    # Determine the resultant move
+    # Move Up:
+    li t2, 87  # Uppercase W
+    beq a0, t2, MOVE_UP
+    li t2, 119  # lowercase w
+    beq a0, t2, MOVE_UP
+    # Move Down:
+    li t2, 83  # Uppercase S
+    beq a0, t2, MOVE_DOWN
+    li t2, 115  # lowercase s
+    beq a0, t2, MOVE_DOWN
+    # Move Left:
+    li t2, 65  # Uppercase A
+    beq a0, t2, MOVE_LEFT
+    li t2, 97  # lowercase a
+    beq a0, t2, MOVE_LEFT
+    # Move Right:
+    li t2, 68  # Uppercase D
+    beq a0, t2, MOVE_RIGHT
+    li t2, 100  # lowercsae d
+    beq a0, t2, MOVE_RIGHT
+
+    # This means $a0 was not one of WASD
+    li a0, zero
+    jr ra
+
+    # Determine the coords of the new move
+    MOVE_UP:
+        addi a1, a1, 1
+        j DONE_MOVE
+    MOVE_DOWN:
+        addi a1, a1, -1
+        j DONE_MOVE
+    MOVE_LEFT:
+        addi a2, a2, -1
+        j DONE_MOVE
+    MOVE_RIGHT:
+        addi a2, a2, 1
+        # fall through
+    DONE_MOVE:
+
+    # Return
+    jr ra
+
+
+# Handle the move behaviour depending on the user's input
+# Arguments:
+# - $a0, the intended row to move towards
+# - $a1, the intended column to move towards
+# - $a2, the WASD direction char ASCII of the move
+# Preconditions:
+# - Assume the intended new coordinate is correctly bounded,
+#   and that it is exactly 1 unit from the current coordinate.
+handle_move_behaviour:
+    # Take note of the Box's coords
+    la a5, box
+    lb a3, 0(a5)  # row of box
+    lb a4, 1(a5)  # col of box
+
+    bne a0, a3, not_pushing_box  # compare to player row
+    bne a1, a4, not_pushing_box  # compare to player col
+    # Player Pushes Box Case:
+
+    # to look behind the box
+
+    # The Box is pushed freely
+
+    # The Box enters a Target
+
+    # Player Cannot Push Box Case
+    # Due to Box behind
+    # Due to Wall behind
+
+    not_pushing_box:
+    # Player Moves Freely Case:
+    # Due to free space in new position
+    # Due to Target in new position
+
+
+# Uses the suggested moving direction to determine whether
+# the box can move or not
+# Arguments:
+# - $a0, the address of the gridsize
+#   - $0(a0) is the upper row bound
+#   - $1(a0) is the upper column bound
+# - $a1, the direction to which the Box moves
+handle_box_move:
+
+
+    # The Box would hit a Wall
+
+    # The Box would hit a Box
+
+    # The Box would go out of bounds
+
+    # The Box would enter a Target
+
+    # The Box would move freely (air)
+
+
+
 
 
 # Obtain random values and keep them in $a0 and $a1:
@@ -348,88 +573,88 @@ handle_tile_printing:
 
 # Move the character based on input direction
 # Arguments: $a0 = direction, (0 = left, 1 = right, 2 = up, 3 = down)
-move_character:
-    # Loading the character's coords:
-    la t0, character  # load addr. of character
-    lb t1, 0(t0)  # load character's x-coord into $t1
-    lb t2, 1(t0)  # load character's y-coord into $t2
+# move_character:
+#     # Loading the character's coords:
+#     la t0, character  # load addr. of character
+#     lb t1, 0(t0)  # load character's x-coord into $t1
+#     lb t2, 1(t0)  # load character's y-coord into $t2
 
-    # Load 1, 2, 3:
-    li t3, 1
-    li t4, 2
-    li t5, 3
+#     # Load 1, 2, 3:
+#     li t3, 1
+#     li t4, 2
+#     li t5, 3
 
-    # Checking the direction:
-    beq a0, x0, move_left_char  # If $a0 == 0, move left
-    beq a0, t3, move_right_char  # If $a0 == 1, move right
-    beq a0, t4, move_up_char  # If $a0 == 2, move up
-    beq a0, t5, move_down_char  # If $a0 == 3, move down
+#     # Checking the direction:
+#     beq a0, x0, move_left_char  # If $a0 == 0, move left
+#     beq a0, t3, move_right_char  # If $a0 == 1, move right
+#     beq a0, t4, move_up_char  # If $a0 == 2, move up
+#     beq a0, t5, move_down_char  # If $a0 == 3, move down
 
-    # Check collision detection:
-    # TODO: add this!
+#     # Check collision detection:
+#     # TODO: add this!
 
-    # Store the new coords:
-    sb t1, 0(t0)  # store x-coords into character
-    sb t2, 1(t0)  # store y-coords into character
+#     # Store the new coords:
+#     sb t1, 0(t0)  # store x-coords into character
+#     sb t2, 1(t0)  # store y-coords into character
 
-    # Return to $ra:
-    jr ra
+#     # Return to $ra:
+#     jr ra
 
-move_left_char:
-    addi t1, t1, -1  # decrease x-coord (move left)
-    j move_character_done
+# move_left_char:
+#     addi t1, t1, -1  # decrease x-coord (move left)
+#     j move_character_done
 
-move_right_char:
-    addi t1, t1, 1  # increase x-coord (move right)
-    j move_character_done
+# move_right_char:
+#     addi t1, t1, 1  # increase x-coord (move right)
+#     j move_character_done
 
-move_up_char:
-    addi t2, t2, -1  # decrease y-coord (move up; lower is greater)
-    j move_character_done
+# move_up_char:
+#     addi t2, t2, -1  # decrease y-coord (move up; lower is greater)
+#     j move_character_done
 
-move_down_char:
-    addi t2, t2, 1  # increase y-coord
-    # fall-thru
+# move_down_char:
+#     addi t2, t2, 1  # increase y-coord
+#     # fall-thru
 
-move_character_done:
-    j move_character
+# move_character_done:
+#     j move_character
 
 
-# Move the box based on input direction
-# Arguments: $a0 = direction (0 = left, 1 = right, 2 = up, 3 = down)
-# Note: Uses the same logic as moving the character
-move_box:
-    # Load coords
-    la t0, box
-    lb t1, 0(t0)
-    lb t2, 1(t0)
+# # Move the box based on input direction
+# # Arguments: $a0 = direction (0 = left, 1 = right, 2 = up, 3 = down)
+# # Note: Uses the same logic as moving the character
+# move_box:
+#     # Load coords
+#     la t0, box
+#     lb t1, 0(t0)
+#     lb t2, 1(t0)
 
-    # Check directions
+#     # Check directions
     
 
-    # Store new coords
+#     # Store new coords
 
-    # Return to $ra
-    jr ra
-
-
-# Move the target based on input direction
-# Arguments: $a0 = direction (0 = left, 1 = right, 2 = up, 3 = down)
-# Note: Uses the same logic as moving the character
-move_target:
-    # Load coords
-    la t0, target
-    lb t1, 0(t0)
-    lb t2, 1(t0)
-
-    # Check directions
-
-    # Store new coords
-
-    # Return to $ra
-    jr ra
+#     # Return to $ra
+#     jr ra
 
 
-ensure_solveable:
+# # Move the target based on input direction
+# # Arguments: $a0 = direction (0 = left, 1 = right, 2 = up, 3 = down)
+# # Note: Uses the same logic as moving the character
+# move_target:
+#     # Load coords
+#     la t0, target
+#     lb t1, 0(t0)
+#     lb t2, 1(t0)
 
-check_collisions:
+#     # Check directions
+
+#     # Store new coords
+
+#     # Return to $ra
+#     jr ra
+
+
+# ensure_solveable:
+
+# check_collisions:
