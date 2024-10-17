@@ -33,10 +33,10 @@ target_str:                 .string "X"
 empty_tile:                 .string "."
 
 # Prompts
-move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys!): "
+move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys! Or, use \"r\" to reset): "
 invalid_prompt:             .string "\nWoah there, please use your WASD keys and try again!\n"
 win_prompt:                 .string "\nCongratulations, you won!\n"
-gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively; use \"r\" to reset): "
+gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively): "
 restart_prompt:             .string "\nRestarting game...\n"
 newgame_prompt:             .string "\nNew game...\n"
 quit_prompt:                .string "\nYou have quit the game. Thanks for playing!\n"
@@ -81,14 +81,43 @@ _start:
 
     # BOX (need to avoid overlapping coords with CHARACTER):
 
+    # Need to avoid generating in corners:
+
     # TODO: ensure that generated coords aren't overlapping
     # with previously generated coords
 
+    GENERATE_BOX_COORDS:
     # Prepare MAX rows and MAX cols
     mv a0, t0
     mv a1, t1
-    jal generate_two_random_values
+    jal generate_two_random_values  # row in $a3, col in $a2
 
+    # Check if generated in corner:
+    CHECK_ROW:
+    addi t2, t0, -1  # $t2 is # rows - 1
+    beq a3, zero, CHECK_COLUMN   
+    beq a3, t2, CHECK_COLUMN
+    j THEN
+    
+    CHECK_COLUMN:
+    # Assert $a3 (row) = 0 or $a3 (row) = # rows - 1
+    addi t2, t1, -1  # $t2 is # columns - 1
+    beq a2, zero, GENERATE_BOX_COORDS
+    beq a2, t2, GENERATE_BOX_COORDS
+    # ^ Re-generate if the box was placed on a corner
+
+    THEN:
+    # Check overlap with character:
+    la a0, character
+    jal check_overlap
+    
+    # Proceed if the coords are unique:
+    beq a0, zero, BOX_PROCEED  # ($a0 == 0) => unique coords
+
+    # Otherwise, try again:
+    j GENERATE_BOX_COORDS
+
+    BOX_PROCEED:
     # Modify the box byte array with the valid RNG values
     la a0, box  # load the box coords as the first arg.
     jal modify_byte_array
@@ -98,14 +127,36 @@ _start:
 
     # TARGET:
 
-    # TODO: ensure that generated coords aren't overlapping
-    # with previously generated coords
+    # Need to generate on edge if Box is on edge:
 
+    GENERATE_TARGET_COORDS:
     # Prepare MAX rows and MAX cols
     mv a0, t0
     mv a1, t1
     jal generate_two_random_values
 
+    # Check overlap with character and box:
+    # Character first
+    la a0, character
+    jal check_overlap
+
+    # Proceed if the coords are unique:
+    beq a0, zero, CHECK_BOX
+
+    # Otherwise, try again
+    j GENERATE_TARGET_COORDS
+
+    CHECK_BOX:    
+    la a0, box
+    jal check_overlap
+
+    # Proceed if the coords are unique
+    beq a0, zero, TARGET_PROCEED
+
+    # Otherwise, try again
+    j GENERATE_TARGET_COORDS
+
+    TARGET_PROCEED:
     # Modify the target byte array with the valid RNG values
     la a0, target  # load the target coords as the first arg.
     jal modify_byte_array
@@ -260,6 +311,32 @@ notrand:
     remu a0, a0, t0   # modulus on bottom bits 
     li a7, 32
     ecall             # sleeping to try to generate a different number
+    jr ra
+
+
+# Returns 1 in $a0 if both the row and column match that of $a0, else 0
+# Arguments:
+# - $a0, the memory address for some data
+# - $a3, a recently randomly generated row
+# - $a2, a recently randomly generated column
+# Returns: In $a0...
+# - 1 if both the row and column overlap with that of $a0
+# - 0 otherwise
+check_overlap:
+    lb t3, 0(a0)  # row of $a0
+    lb t2, 1(a0)  # col of $a0
+    
+    bne t3, a3, NOT_OVERLAPPING  # compare rows
+    bne t2, a2, NOT_OVERLAPPING  # compare columns
+
+    # Reaching here means the coords overlap
+    li a0, 1
+    j END_CHECK
+
+    NOT_OVERLAPPING:
+    li a0, 0
+
+    END_CHECK:
     jr ra
 
 
