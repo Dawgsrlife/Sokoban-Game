@@ -102,7 +102,7 @@ _start:
     # - Denote the character using '@'
     # - Denote boxes using '*'
     # - Denote targets using 'X'
-    jal print_board_state
+    jal print_board_state  # to print the board once first
 
     
 
@@ -118,23 +118,13 @@ _start:
     # indicate when the box is located in the same position as the target.
     # For the former, it may be useful for this loop to exist in a function,
     # to make it cleaner to exit the game loop.
-    GAME_LOOP:
-        # Take user input
-        li a7, 12
-        ecall
-
-        # Check if the user's input is valid, or if it results in no change
-
-        # If valid, update the gameboard state
-
-        # Then, print the gameboard state
-        
-
-        j GAME_LOOP
-
+    jal run_game
 
     # TODO: That's the base game! Now, pick a pair of enhancements and
     # consider how to implement them.
+
+    # ENHANCEMENTS:
+
 	
 exit:
     li a7, 10
@@ -162,7 +152,7 @@ run_game:
     addi sp, sp, -4
     sw ra, 0(sp)
 
-    # Grab a move from the user:
+    # Grab a valid move from the user:
     la a0, gridsize  # prepare the gridsize
     la a1, move_prompt  # prepare the move prompt
     jal verify_move_input_with_bound
@@ -171,6 +161,11 @@ run_game:
     jal handle_move_behaviour  # args. provided by prev. function call
 
     # Then, print the gameboard state
+    jal print_board_state
+
+    # Check if a winner was received
+    li t0, 999  # Winning flag
+    beq t0, t3, win_game  # jump to win game function
 
     # Retrieve the original return address
     lw ra, 0(sp)
@@ -283,7 +278,7 @@ handle_move_direction:
     beq a0, t2, MOVE_RIGHT
 
     # This means $a0 was not one of WASD
-    li a0, zero
+    li a0, 0
     jr ra
 
     # Determine the coords of the new move
@@ -314,53 +309,91 @@ handle_move_direction:
 # - Assume the intended new coordinate is correctly bounded,
 #   and that it is exactly 1 unit from the current coordinate.
 handle_move_behaviour:
+    # Stash $ra
+    addi sp, sp, -4
+    sw ra, 0(sp)
+
+    # Take note of the intended move
+    mv t5, a0
+    mv t6, a1
+
     # Take note of the Box's coords
     la a5, box
     lb a3, 0(a5)  # row of box
     lb a4, 1(a5)  # col of box
 
-    bne a0, a3, not_pushing_box  # compare to player row
-    bne a1, a4, not_pushing_box  # compare to player col
+    bne a0, a3, UPDATE_PLAYER_COORDS  # compare to player row
+    bne a1, a4, UPDATE_PLAYER_COORDS  # compare to player col
     # Player Pushes Box Case:
+    # Prepare args.
+    mv a0, a2  # WASD char for direction
+    mv a1, t5  # intended row
+    mv a2, t6  # intended column
+    # Now, call the box-handling function
+    jal handle_box_move  # sets $a0 to 0 if box doesn't move
+    # Check if the box was moved
+    beq a0, zero, NO_UPDATES
 
-    # to look behind the box
+    UPDATE_PLAYER_COORDS:
+    la t0, character
+    lb t5, 0(t0)
+    lb t6, 1(t0)
 
-    # The Box is pushed freely
+    NO_UPDATES:
+    # Retrieve $ra
+    lw ra, 0(sp)
+    addi sp, sp, 4  # deallocate the stack
 
-    # The Box enters a Target
-
-    # Player Cannot Push Box Case
-    # Due to Box behind
-    # Due to Wall behind
-
-    not_pushing_box:
-    # Player Moves Freely Case:
-    # Due to free space in new position
-    # Due to Target in new position
+    # Return
+    jr ra
 
 
 # Uses the suggested moving direction to determine whether
 # the box can move or not
 # Arguments:
-# - $a0, the address of the gridsize
-#   - $0(a0) is the upper row bound
-#   - $1(a0) is the upper column bound
-# - $a1, the direction to which the Box moves
+# - $a0, the direction to which the Box moves
+# - $a1 and $a2 as the current row and column of the Box
+# Returns: $a0 is 0 if the box was not moved
 handle_box_move:
+    # Stash the return address
+    addi sp, sp, -4
+    sw ra, 0(sp)
 
+    # Hypothetical Box Move:
+    jal handle_move_direction
 
-    # The Box would hit a Wall
-
-    # The Box would hit a Box
-
+    bne a0, zero, IN_BOUNDS
     # The Box would go out of bounds
 
+    IN_BOUNDS:
+    # NOT IMPLEMENTED: The Box would hit a Wall
+
+    # NOT IMPLEMENTED: The Box would hit a Box
+
+    la t0, target
+    lb t1, 0(t0)  # row of target
+    lb t2, 1(t0)  # col of target
+    # Compare new box move's coords to target coords 
+    bne a1, t1, MOVE_BOX
+    bne a2, t2, MOVE_BOX
     # The Box would enter a Target
+    li t3, 999  # to indicate that the game is won!
 
+    # The Box and Target coordinates should be the same
+    # Let fall-through into the following label handle storing new box coords
+
+    MOVE_BOX:
     # The Box would move freely (air)
+    la t0, box
+    sb a1, 0(t0)  # store new row of box
+    sb a2, 1(t0)  # store new col of box
 
+    # Retrieve the return address
+    lw ra, 0(sp)
+    addi sp, sp, 4  # deallocate the stack
 
-
+    # Return
+    jr ra
 
 
 # Obtain random values and keep them in $a0 and $a1:
@@ -568,6 +601,11 @@ handle_tile_printing:
 
     done_tile:
     jr ra  # jump back to the return address of this function call
+
+
+# End the game and report that the game is won!
+win_game:
+    # TODO: Complete this!
 
 ################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
 
