@@ -27,11 +27,15 @@ empty_tile:             .string "."
 # Prompts
 move_prompt:            .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys!): "
 invalid_prompt:         .string "\nWoah there, please use your WASD keys and try again!\n"
+win_prompt:             .string "\nCongratulations; you won!\n"
 
 .text
 .globl _start
 
 _start:
+    li a6, 0  # clean the win indicator register
+    # MAYBE MAKE A FUNCTION TO CLEAN UP ALL THE REGISTERS!
+
     # TODO: Generate locations for the character, box, and target. Static
     # locations in memory have been provided for the (x, y) coordinates 
     # of each of these elements.
@@ -119,8 +123,8 @@ _start:
         jal run_game
 
         # Check if a winner was received
-        li t0, 999  # Winning flag
-        beq t0, t6, win_game  # jump to win game function
+        li t0, 127  # Winning flag
+        beq t0, a6, win_game  # jump to win game function
 
         j GAME_LOOP
 
@@ -272,7 +276,7 @@ handle_move_direction:
     # Move Right:
     li t2, 68  # Uppercase D
     beq a0, t2, MOVE_RIGHT
-    li t2, 100  # lowercsae d
+    li t2, 100  # lowercase d
     beq a0, t2, MOVE_RIGHT
 
     # This means $a0 was not one of WASD
@@ -328,14 +332,15 @@ handle_move_behaviour:
     # Now, call the box-handling function
 
     # This function should use the same args. as the given params.
+    # Params. $a1 and $a2 are directly the args.
     jal handle_box_move  # sets $a0 to 0 if box doesn't move
     # Check if the box was moved
     beq a0, zero, NO_UPDATES
 
     UPDATE_PLAYER_COORDS:
     la t0, character
-    lb t5, 0(t0)
-    lb t6, 1(t0)
+    sb t5, 0(t0)
+    sb t6, 1(t0)
 
     NO_UPDATES:
     # Retrieve $ra
@@ -379,7 +384,7 @@ handle_box_move:
     bne a1, t1, MOVE_BOX
     bne a2, t2, MOVE_BOX
     # The Box would enter a Target
-    li t6, 999  # to indicate that the game is won!
+    li a6, 127  # to indicate that the game is won!
 
     # The Box and Target coordinates should be the same
     # Let fall-through into the following label handle storing new box coords
@@ -605,7 +610,12 @@ handle_tile_printing:
 
 # End the game and report that the game is won!
 win_game:
-    # TODO: Complete this!
+    # Print out the win prompt:
+    li a7, 4
+    la a0, win_prompt
+
+    # Exit the program
+    j exit
 
 ################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
 
