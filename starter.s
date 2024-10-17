@@ -36,7 +36,7 @@ empty_tile:                 .string "."
 move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys!): "
 invalid_prompt:             .string "\nWoah there, please use your WASD keys and try again!\n"
 win_prompt:                 .string "\nCongratulations, you won!\n"
-gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively): "
+gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively; use \"r\" to reset): "
 restart_prompt:             .string "\nRestarting game...\n"
 newgame_prompt:             .string "\nNew game...\n"
 quit_prompt:                .string "\nYou have quit the game. Thanks for playing!\n"
@@ -154,6 +154,10 @@ _start:
         # Check if a winner was received
         li t0, 127  # Winning flag
         beq t0, a6, win_game  # jump to win game function
+        
+        # Check if a reset request was received
+        li t0, -1  # Reset flag
+        beq t0, a0, restart_game
 
         j GAME_LOOP
     GAME_OVER:
@@ -311,6 +315,7 @@ take_endstate_input:
 #   from the current tile.
 # Return:
 # - The WASD ASCII value for input direction in $a0
+#   - If $a0 is -1, then the user intends to restart the game
 # - The move's row in $a1 and the move's column in $a2
 run_game:
     la a0, gridsize  # prepare the gridsize
@@ -362,6 +367,11 @@ run_game:
         # Loop back if the user does not move with WASD:
         # The previous function call would set $a0 to 0
         bne a0, zero, VALID_MOVE
+
+        # CHECK RESET INTENDED:
+        li a7, -1  # -1 implies reset
+        beq a0, a7, RUN_GAME_END
+
         li a7, 4
         la a0, invalid_prompt
         ecall
@@ -387,6 +397,7 @@ run_game:
 
         # $t6 should still store the direction char ASCII value
 
+    RUN_GAME_END:
     # Retrieve the $ra
 	addi sp, sp, 4  # restore the stack pointer to where $ra is stashed
     lw ra, 0(sp)
@@ -401,7 +412,9 @@ run_game:
 # - $a1, the row number
 # - $a2, the column number
 # Return:
-# - $a0 becomes zero if $a0 wasn't originally one of WASD.
+# - $a0 becomes...
+#   - zero if $a0 wasn't originally one of WASD;
+#   - -1 if the user intends to reset the game
 # - The updated $a1 and $a2, representing the new coords from the move.
 handle_move_direction:
     # Determine the resultant move
@@ -426,9 +439,19 @@ handle_move_direction:
     li t2, 100  # lowercase d
     beq a0, t2, MOVE_RIGHT
 
+    # RESET:
+    li t2, 82  # Uppercase R
+    beq a0, t2, RESET_INTENDED
+    li t2, 114  # lowercase r
+    beq a0, t2, RESET_INTENDED
+
     # This means $a0 was not one of WASD
     li a0, 0
-    jr ra
+    j HANDLE_MOVE_END
+
+    RESET_INTENDED:
+    li a0, -1
+    j HANDLE_MOVE_END
 
     # Determine the coords of the new move
     MOVE_UP:
@@ -446,6 +469,7 @@ handle_move_direction:
     DONE_MOVE:
 
     # Return
+    HANDLE_MOVE_END:
     jr ra
 
 
