@@ -11,23 +11,28 @@
 
 .data
 # Game Setup and Object Coordinates:
-gridsize:               .byte 8,8  # Denote walls using '#'
-character:              .byte 0,0  # Denote using '@'
-box:                    .byte 0,0  # Denote using '*'
-target:                 .byte 0,0  # Denote using 'X'
+gridsize:                   .byte 8,8  # Denote walls using '#'
+character:                  .byte 0,0  # Denote using '@'
+box:                        .byte 0,0  # Denote using '*'
+target:                     .byte 0,0  # Denote using 'X'
 
 # Predetermined Object String Representations:
-empty_space:            .string " "
-newline:                .string "\n"
-character_str:          .string "@"
-box_str:                .string "*"
-target_str:             .string "X"
-empty_tile:             .string "."
+empty_space:                .string " "
+newline:                    .string "\n"
+character_str:              .string "@"
+box_str:                    .string "*"
+target_str:                 .string "X"
+empty_tile:                 .string "."
 
 # Prompts
-move_prompt:            .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys!): "
-invalid_prompt:         .string "\nWoah there, please use your WASD keys and try again!\n"
-win_prompt:             .string "\nCongratulations; you won!\n"
+move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys!): "
+invalid_prompt:             .string "\nWoah there, please use your WASD keys and try again!\n"
+win_prompt:                 .string "\nCongratulations, you won!\n"
+gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively): "
+restart_prompt:             .string "\nRestarting game...\n"
+newgame_prompt:             .string "\nNew game...\n"
+quit_prompt:                .string "\nYou have quit the game. Thanks for playing!\n"
+invalid_endstate_prompt:    .string "\nTry again!\nUse \"r\" to restart, \"n\" to play a new game, or \"q\" to quit: "
 
 .text
 .globl _start
@@ -100,6 +105,7 @@ _start:
     # consider whether you want to place this string in static memory or 
     # on the stack.
 
+    # ADD GAME INTRO HERE!!!
 
     # Legend:
     # - Denote walls using '#'
@@ -108,6 +114,10 @@ _start:
     # - Denote targets using 'X'
 
     # The board will be printed starting from the game loop below.
+    # Print a newline at least:
+    li a7, 4
+    la a0, newline
+    ecall
 
     # TODO: Enter a loop and wait for user input. Whenever user input is
     # received, update the gameboard state with the new location of the 
@@ -127,21 +137,42 @@ _start:
         beq t0, a6, win_game  # jump to win game function
 
         j GAME_LOOP
+    GAME_OVER:
+        # Print the gameover prompt:
+        li a7, 4
+        la a0, gameover_prompt
+        ecall
+
+        jal take_endstate_input
+        # Assert $a0 contains the valid character
+
+
 
     # TODO: That's the base game! Now, pick a pair of enhancements and
     # consider how to implement them.
 
     # ENHANCEMENTS:
 
+
+# Resets the board for a new game of Sokoban
+new_game:
+
+
+# Resets the board to the starting state of the current game
+restart_game:
+
 	
 exit:
+    li a7, 4
+    la a0, quit_prompt
+    ecall
+
     li a7, 10
     ecall
     
-    
 # --- HELPER FUNCTIONS ---
 # Feel free to use, modify, or add to them however you see fit.
-     
+
 # Arguments: an integer MAX in $a0
 # Return: A number from 0 (inclusive) to MAX (exclusive)
 notrand:
@@ -152,6 +183,47 @@ notrand:
     li a7, 32
     ecall             # sleeping to try to generate a different number
     jr ra
+
+
+# Prompts the user until receiving a valid char input of
+# the letters in {r, R, n, N, q, Q} for the game's end state.
+# Returns: The valid char input in $a0
+take_endstate_input:
+    END_STATE:
+    li a7, 12  # Take char input into $a0
+    ecall
+
+    # PRINT NEWLINE:
+    mv t1, a0  # temp stash
+    li a7, 4
+    la a0, newline
+    ecall
+    mv a0, t1  # retrieve original $a0 value
+
+    # RESTART GAME:
+    li t1, 114  # lowercase r
+    beq a0, t1, restart_game
+    li t1, 82  # Uppercase R
+    beq a0, t1, restart_game
+
+    # NEW GAME:
+    li t1, 110  # lowercase n
+    beq a0, t1, new_game
+    li t1, 78  # Uppercase N
+    beq a0, t1, new_game
+
+    # QUIT GAME:
+    li t1, 113  # lowercase q
+    beq a0, t1, exit
+    li t1, 81  # Uppercase Q
+    beq a0, t1, exit
+
+    # Print invalid input notification and loop back:
+    li a7, 4
+    la a0, invalid_endstate_prompt
+    ecall
+
+    j END_STATE
 
 
 # Takes user input indefinitely until receiving a move
@@ -629,9 +701,9 @@ win_game:
     # Print out the win prompt:
     li a7, 4
     la a0, win_prompt
+    ecall
 
-    # Exit the program
-    j exit
+    j GAME_OVER
 
 ################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
 
