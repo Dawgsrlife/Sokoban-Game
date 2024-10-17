@@ -25,7 +25,7 @@ target_str:             .string "X"
 empty_tile:             .string "."
 
 # Prompts
-move_prompt:            .string "\nMake your move! Left, Right, Up, or Down? (Use your WASD keys!): "
+move_prompt:            .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys!): "
 invalid_prompt:         .string "\nWoah there, please use your WASD keys and try again!\n"
 
 .text
@@ -118,7 +118,14 @@ _start:
     # indicate when the box is located in the same position as the target.
     # For the former, it may be useful for this loop to exist in a function,
     # to make it cleaner to exit the game loop.
-    jal run_game
+    GAME_LOOP:
+        jal run_game
+
+        # Check if a winner was received
+        li t0, 999  # Winning flag
+        beq t0, t3, win_game  # jump to win game function
+
+        j GAME_LOOP
 
     # TODO: That's the base game! Now, pick a pair of enhancements and
     # consider how to implement them.
@@ -162,10 +169,6 @@ run_game:
 
     # Then, print the gameboard state
     jal print_board_state
-
-    # Check if a winner was received
-    li t0, 999  # Winning flag
-    beq t0, t3, win_game  # jump to win game function
 
     # Retrieve the original return address
     lw ra, 0(sp)
@@ -510,11 +513,6 @@ print_board_state:
     # Undo the stack pointer
     lw ra, 0(sp)
     addi sp, sp, 4
-    
-    # Print a newline
-    la a0, newline
-    li a7, 4
-    ecall
 
     # Return to the address of the original function call
     jr ra
