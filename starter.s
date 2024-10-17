@@ -102,11 +102,8 @@ _start:
     # - Denote the character using '@'
     # - Denote boxes using '*'
     # - Denote targets using 'X'
-    jal print_board_state  # to print the board once first
 
-    
-
-
+    # The board will be printed starting from the game loop below.
 
     # TODO: Enter a loop and wait for user input. Whenever user input is
     # received, update the gameboard state with the new location of the 
@@ -123,7 +120,7 @@ _start:
 
         # Check if a winner was received
         li t0, 999  # Winning flag
-        beq t0, t3, win_game  # jump to win game function
+        beq t0, t6, win_game  # jump to win game function
 
         j GAME_LOOP
 
@@ -153,43 +150,22 @@ notrand:
     jr ra
 
 
-# Runs the Sokoban game.
-run_game:
-    # Stash the return address
-    addi sp, sp, -4
-    sw ra, 0(sp)
-
-    # Grab a valid move from the user:
-    la a0, gridsize  # prepare the gridsize
-    la a1, move_prompt  # prepare the move prompt
-    jal verify_move_input_with_bound
-
-    # Update the gameboard state
-    jal handle_move_behaviour  # args. provided by prev. function call
-
-    # Then, print the gameboard state
-    jal print_board_state
-
-    # Retrieve the original return address
-    lw ra, 0(sp)
-    addi sp, sp, 4
-
-    # Return
-    jr ra
-
-
 # Takes user input indefinitely until receiving a move
-# which lies between 0 (inclusive) and MAX (exclusive)
-# Arguments:
-# - $a0, the address of the gridsize
-#   - $0(a0) is the upper row bound
-#   - $1(a0) is the upper column bound
-# - $a1, the prompt address to issue
+# which lies between 0 (inclusive) and MAX (exclusive).
+#
+# Updates (and prints to the console) the game
+# with the result of the user input.
+#
 # Post-Conditions:
 # - The intended move yields a valid tile exactly 1 unit
 #   from the current tile.
-# Return: The move's row in $a1 and the move's column in $a2
-verify_move_input_with_bound:
+# Return:
+# - The WASD ASCII value for input direction in $a0
+# - The move's row in $a1 and the move's column in $a2
+run_game:
+    la a0, gridsize  # prepare the gridsize
+    la a1, move_prompt  # prepare the move prompt
+
     # Stash the $ra
     addi sp, sp, -4
     sw ra, 0(sp)
@@ -203,19 +179,33 @@ verify_move_input_with_bound:
     lb a4, 1(a2)  # current col
 
     # Take user input indefinitely
+	addi sp, sp, -4
+	sw a1, 0(sp)  # stash $a1
+    # mv t5, a1  # Store the prompt address in $t5
     INPUT_LOOP:
+        # Print the board state before asking for the move:
+		jal print_board_state
+
         # Take user input for this "iteration"
         li a7, 4
-        mv a0, a1  # to prepare the prompt
+		lw a0, 0(sp)  # retrieve $a1
         ecall
         
-        li a7, 12  # take char, stored in $a0
+        li a7, 12  # take char (WASD move), stored in $a0
         ecall
+        mv t6, a0  # take note of the actual WASD move
 
+        # Print a newline for console spacing
+        li a7, 4
+        la a0, newline
+        ecall
+        
         # Determine the resultant move
         # $a0 stores the user input ASCII value
+        mv a0, t6  # restore $a0
         mv a1, a3  # prepare current row
         mv a2, a4  # prepare current col
+
         jal handle_move_direction
         # $a1 and $a2 will store the intended move's coords
 
@@ -231,20 +221,25 @@ verify_move_input_with_bound:
         # Now, ($a1, $a2) should represent the new coordinates
         # of the user's intended move.
 
-        # Loop back if the intended move is not wihtin the bounds:
+        # === BOUNDS!!! ===
+        # Loop back if the intended move is not within the bounds:
         blt a1, zero, INPUT_LOOP  # lower bound for row
-        bgt a1, t0, INPUT_LOOP  # upper bound for row
+        bge a1, t0, INPUT_LOOP  # upper bound for row
         blt a2, zero, INPUT_LOOP  # lower bound for col
-        bgt a2, t1, INPUT_LOOP  # upper bound for col
-
+        bge a2, t1, INPUT_LOOP  # upper bound for col
+        
         # If there is no loopback, then return the coords
         # in $a1 and $a2.
 
-        # $t2 should still store the direction char ASCII
+        # Write the intended move into memory:
+		jal handle_move_behaviour
+
+        # $t6 should still store the direction char ASCII value
 
     # Retrieve the $ra
+	addi sp, sp, 4  # restore the stack pointer to where $ra is stashed
     lw ra, 0(sp)
-    addi sp, sp, 4
+    addi sp, sp, 4  # restore the stack pointer to its original position
 
     jr ra  # to return
 
@@ -286,10 +281,10 @@ handle_move_direction:
 
     # Determine the coords of the new move
     MOVE_UP:
-        addi a1, a1, 1
+        addi a1, a1, -1
         j DONE_MOVE
     MOVE_DOWN:
-        addi a1, a1, -1
+        addi a1, a1, 1
         j DONE_MOVE
     MOVE_LEFT:
         addi a2, a2, -1
@@ -305,9 +300,9 @@ handle_move_direction:
 
 # Handle the move behaviour depending on the user's input
 # Arguments:
-# - $a0, the intended row to move towards
-# - $a1, the intended column to move towards
-# - $a2, the WASD direction char ASCII of the move
+# - $a0, the WASD direction char ASCII of the move
+# - $a1, the intended row to move towards
+# - $a2, the intended column to move towards
 # Preconditions:
 # - Assume the intended new coordinate is correctly bounded,
 #   and that it is exactly 1 unit from the current coordinate.
@@ -317,22 +312,22 @@ handle_move_behaviour:
     sw ra, 0(sp)
 
     # Take note of the intended move
-    mv t5, a0
-    mv t6, a1
+    mv t5, a1
+    mv t6, a2
 
     # Take note of the Box's coords
     la a5, box
     lb a3, 0(a5)  # row of box
     lb a4, 1(a5)  # col of box
 
-    bne a0, a3, UPDATE_PLAYER_COORDS  # compare to player row
-    bne a1, a4, UPDATE_PLAYER_COORDS  # compare to player col
+    bne a1, a3, UPDATE_PLAYER_COORDS  # compare to player row
+    bne a2, a4, UPDATE_PLAYER_COORDS  # compare to player col
+    # Reaching here means the player intends to "move into a box"
     # Player Pushes Box Case:
-    # Prepare args.
-    mv a0, a2  # WASD char for direction
-    mv a1, t5  # intended row
-    mv a2, t6  # intended column
+
     # Now, call the box-handling function
+
+    # This function should use the same args. as the given params.
     jal handle_box_move  # sets $a0 to 0 if box doesn't move
     # Check if the box was moved
     beq a0, zero, NO_UPDATES
@@ -352,9 +347,10 @@ handle_move_behaviour:
 
 
 # Uses the suggested moving direction to determine whether
-# the box can move or not
+# the box can move or not. Make the move if it is possible.
+#
 # Arguments:
-# - $a0, the direction to which the Box moves
+# - $a0, the WASD direction to which the Box moves
 # - $a1 and $a2 as the current row and column of the Box
 # Returns: $a0 is 0 if the box was not moved
 handle_box_move:
@@ -364,11 +360,14 @@ handle_box_move:
 
     # Hypothetical Box Move:
     jal handle_move_direction
+    # $a1 and $a2 become the intended coords of the box movement
 
-    bne a0, zero, IN_BOUNDS
+    bne a0, zero, MOVE_DONE
     # The Box would go out of bounds
-
-    IN_BOUNDS:
+    
+    # If the box is moved by the player,
+    # then the move must be in WASD
+    MOVE_DONE:
     # NOT IMPLEMENTED: The Box would hit a Wall
 
     # NOT IMPLEMENTED: The Box would hit a Box
@@ -380,7 +379,7 @@ handle_box_move:
     bne a1, t1, MOVE_BOX
     bne a2, t2, MOVE_BOX
     # The Box would enter a Target
-    li t3, 999  # to indicate that the game is won!
+    li t6, 999  # to indicate that the game is won!
 
     # The Box and Target coordinates should be the same
     # Let fall-through into the following label handle storing new box coords
@@ -457,6 +456,9 @@ print_board_state:
     # This function calls at least one other function:
     addi sp, sp, -4
     sw ra, 0(sp)
+
+    # Load the gridsize address (to be safe)
+    la t6, gridsize
 
     # Store board size:
     # $t6 currently stores the gridsize address
