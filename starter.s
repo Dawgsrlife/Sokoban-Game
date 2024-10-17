@@ -10,11 +10,19 @@
 ##############################################################################
 
 .data
-# Game Setup and Object Coordinates:
+# Board Dimensions
 gridsize:                   .byte 8,8  # Denote walls using '#'
+
+# Object Coordinates
 character:                  .byte 0,0  # Denote using '@'
 box:                        .byte 0,0  # Denote using '*'
 target:                     .byte 0,0  # Denote using 'X'
+
+# Copy of Initial Object Coordinates
+initial_character:          .byte 0,0
+initial_box:                .byte 0,0
+initial_target:             .byte 0,0
+
 
 # Predetermined Object String Representations:
 empty_space:                .string " "
@@ -38,7 +46,7 @@ invalid_endstate_prompt:    .string "\nTry again!\nUse \"r\" to restart, \"n\" t
 .globl _start
 
 _start:
-    li a6, 0  # clean the win indicator register
+    jal flush_registers
     # MAYBE MAKE A FUNCTION TO CLEAN UP ALL THE REGISTERS!
 
     # TODO: Generate locations for the character, box, and target. Static
@@ -62,10 +70,13 @@ _start:
     # Obtain random values and keep them in $a0 and $a1:
     mv a0, t0  # arg. 1: MAX rows
     mv a1, t1  # arg. 2: MAX cols
-    jal generate_two_random_values
+    jal generate_two_random_values  # row in $a3, col in $a2
 
     # Modify the character byte array with the valid RNG values
     la a0, character  # load the character coords as the first arg.
+    jal modify_byte_array
+    # Load the same into a copy:
+    la a0, initial_character
     jal modify_byte_array
 
     # BOX (need to avoid overlapping coords with CHARACTER):
@@ -81,6 +92,9 @@ _start:
     # Modify the box byte array with the valid RNG values
     la a0, box  # load the box coords as the first arg.
     jal modify_byte_array
+    # Load the same into a copy:
+    la a0, initial_box
+    jal modify_byte_array
 
     # TARGET:
 
@@ -94,6 +108,9 @@ _start:
 
     # Modify the target byte array with the valid RNG values
     la a0, target  # load the target coords as the first arg.
+    jal modify_byte_array
+    # Load the same into a copy:
+    la a0, initial_target
     jal modify_byte_array
    
     # TODO: Now, print the gameboard. Select symbols to represent the walls,
@@ -112,6 +129,8 @@ _start:
     # - Denote the character using '@'
     # - Denote boxes using '*'
     # - Denote targets using 'X'
+
+    START_RESET:
 
     # The board will be printed starting from the game loop below.
     # Print a newline at least:
@@ -156,12 +175,46 @@ _start:
 
 # Resets the board for a new game of Sokoban
 new_game:
+    j _start
 
 
 # Resets the board to the starting state of the current game
 restart_game:
+    # Reset the actual coords of objects to their initial coords:
+    # CHARACTER:
+    la a0, initial_character
+    lb a3, 0(a0)  # initial row
+    lb a2, 1(a0)  # initial col
 
-	
+    # Update actual coords
+    la a0, character
+    jal modify_byte_array
+
+    # BOX:
+    la a0, initial_box
+    lb a3, 0(a0)  # initial row
+    lb a2, 1(a0)  # initial col
+
+    # Update actual coords
+    la a0, box
+    jal modify_byte_array
+
+    # TARGET:
+    la a0, initial_target
+    lb a3, 0(a0)  # initial row
+    lb a2, 1(a0)  # initial col
+
+    # Update actual coords
+    la a0, target
+    jal modify_byte_array
+
+    # Clear registers
+    jal flush_registers
+
+    # Launch the game assuming the coords are handled
+    j START_RESET
+
+
 exit:
     li a7, 4
     la a0, quit_prompt
@@ -172,6 +225,27 @@ exit:
     
 # --- HELPER FUNCTIONS ---
 # Feel free to use, modify, or add to them however you see fit.
+
+
+# Set all relevant registers to 0
+flush_registers:
+    li t0, 0
+    li t1, 0
+    li t2, 0
+    li t3, 0
+    li t4, 0
+    li t5, 0
+    li t6, 0
+    li a0, 0
+    li a1, 0
+    li a2, 0
+    li a3, 0
+    li a4, 0
+    li a5, 0
+    li a6, 0
+
+    jr ra
+
 
 # Arguments: an integer MAX in $a0
 # Return: A number from 0 (inclusive) to MAX (exclusive)
