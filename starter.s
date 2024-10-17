@@ -235,6 +235,7 @@ run_game:
         # If there is no loopback, then return the coords
         # in $a1 and $a2.
 
+        # Assert $t0 and $t1 store the max number of rows and columns.
         # Write the intended move into memory:
 		jal handle_move_behaviour
 
@@ -333,6 +334,7 @@ handle_move_behaviour:
 
     # This function should use the same args. as the given params.
     # Params. $a1 and $a2 are directly the args.
+    # Assert $t0 and $t1 store the max number of rows and columns
     jal handle_box_move  # sets $a0 to 0 if box doesn't move
     # Check if the box was moved
     beq a0, zero, NO_UPDATES
@@ -365,15 +367,28 @@ handle_box_move:
 
     # Hypothetical Box Move:
     jal handle_move_direction
+    # $a0 is zero if it wasn't one of WASD.
     # $a1 and $a2 become the intended coords of the box movement
 
-    bne a0, zero, MOVE_DONE
+    # Check bounds for box:
+    blt a1, zero, BOX_NOT_MOVED
+    bge a1, t0, BOX_NOT_MOVED  # Assume $t0 stores num of rows
+    blt a2, zero, BOX_NOT_MOVED
+    bge a2, t1, BOX_NOT_MOVED  # Assume $t1 stores num of cols
+
+    # Make the move if the bound check passes
+    # NOT IMPLEMENTED: May want to do more checks before making the move
+    j MOVE_DONE
+
     # The Box would go out of bounds
-    
+    BOX_NOT_MOVED:
+    li a0, 0  # Indicate that the box has not moved
+    j BOX_RETURN
+
     # If the box is moved by the player,
     # then the move must be in WASD
     MOVE_DONE:
-    # NOT IMPLEMENTED: The Box would hit a Wall
+    # NOT IMPLEMENTED: The Box would hit an Inner Wall
 
     # NOT IMPLEMENTED: The Box would hit a Box
 
@@ -395,11 +410,12 @@ handle_box_move:
     sb a1, 0(t0)  # store new row of box
     sb a2, 1(t0)  # store new col of box
 
+    # RETURN
+    BOX_RETURN:
     # Retrieve the return address
     lw ra, 0(sp)
     addi sp, sp, 4  # deallocate the stack
 
-    # Return
     jr ra
 
 
