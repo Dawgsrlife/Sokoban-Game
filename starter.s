@@ -83,9 +83,6 @@ _start:
 
     # Need to avoid generating in corners:
 
-    # TODO: ensure that generated coords aren't overlapping
-    # with previously generated coords
-
     GENERATE_BOX_COORDS:
     # Prepare MAX rows and MAX cols
     mv a0, t0
@@ -130,11 +127,82 @@ _start:
     # Need to generate on edge if Box is on edge:
 
     GENERATE_TARGET_COORDS:
+    # Assert $a3 and $a2 refer to the row and col (respectively) of the Box
+
+    # If the Box is on an edge,
+    # then generate on the same edge as the box:
+    beq a2, zero, LEFT_EDGE
+    addi t2, t1, -1  # assert $t1 is # of columns
+    beq a2, t2, RIGHT_EDGE
+    beq a3, zero, TOP_EDGE
+    addi t2, t0, -1  # assert $t0 is # of rows
+    beq a3, t2, BOTTOM_EDGE
+
+    j UNSPECIFIED_GENERATION
+
+    TOP_EDGE:
+    # The row should be 0; the column should be random and valid.
+    
+    # Prepare args.
+    mv a0, t1  # Prepare $a0 to be # of columns
+    mv a1, zero  # Fixing constant
+    mv a2, zero  # Establish fix row
+
+    jal random_corresponding_edge_coordinate
+    # Assert $a3 is the row and $a2 is the column
+
+    j PROCEED
+
+    BOTTOM_EDGE:
+    # The row should be (# of rows - 1);
+    # the column should be random and valid.
+    
+    # Prepare args.
+    mv a0, t1  # Prepare $a0 to be # of columns
+    addi a1, t0, -1  # Fixing constant
+    mv a2, zero  # Establish fix row
+
+    jal random_corresponding_edge_coordinate
+    # Assert $a3 is the row and $a2 is the column
+
+    j PROCEED
+
+    LEFT_EDGE:
+    # The row should be random and valid; the column should be 0.
+    
+    # Prepare args.
+    mv a0, t0  # Prepare $a0 to be # of rows
+    mv a1, zero  # Fixing constant
+    li a2, 1  # Establish fix column
+
+    jal random_corresponding_edge_coordinate
+    # Assert $a3 is the row and $a2 is the column
+
+    j PROCEED
+
+    RIGHT_EDGE:
+    # The row should be random and valid;
+    # the column should be (# of columns - 1).
+    
+    # Prepare args.
+    mv a0, t0  # Prepare $a0 to be # of rows
+    addi a1, t1, -1  # Fixing constant
+    li a2, 1  # Establish fix column
+    
+    jal random_corresponding_edge_coordinate
+    # Assert $a3 is the row and $a2 is the column
+
+    j PROCEED
+
+    UNSPECIFIED_GENERATION:
+
     # Prepare MAX rows and MAX cols
     mv a0, t0
     mv a1, t1
     jal generate_two_random_values
+    # Assert $a3 is the row and $a2 is the column
 
+    PROCEED:
     # Check overlap with character and box:
     # Character first
     la a0, character
@@ -146,7 +214,7 @@ _start:
     # Otherwise, try again
     j GENERATE_TARGET_COORDS
 
-    CHECK_BOX:    
+    CHECK_BOX:
     la a0, box
     jal check_overlap
 
@@ -337,6 +405,51 @@ check_overlap:
     li a0, 0
 
     END_CHECK:
+    jr ra
+
+
+# Given one of the four edges on a rectangular board,
+# this function returns a random coordinate that is located
+# on the same edge.
+# Arguments:
+# - $a2, the indicator of whether the row or column is fixed
+#   - $a2 == 0 => fix row
+#   - O=> fix column
+# - $a1, the constant to fix with
+# - $a0, the upper bound for random number generation
+# Returns:
+# - The determined edge coordinate:
+#   - $a3, the row
+#   - $a2, the column
+random_corresponding_edge_coordinate:
+    # Stash $ra
+    addi sp, sp, -4
+    sw ra, 0(sp)
+
+    bne a2, zero, DO_FIX_COLUMN
+
+    DO_FIX_ROW:
+        mv a3, a1  # Fix row
+        # Assert $a0 is the upper bound
+        jal notrand
+        # Assert $a0 is the random column number
+        mv a2, a0  # Random col
+
+        j DONE_EDGE
+
+    DO_FIX_COLUMN:
+        # Assert $a0 is the upper bound
+        mv a2, a1  # Fix col
+        jal notrand
+        # Assert $a0 is the random row number
+        mv a3, a0  # Random row
+
+    DONE_EDGE:
+    # Retrieve $ra
+    lw ra, 0(sp)
+    addi sp, sp, 4
+
+    # Assert $a3 and $a2 are the row and column, respectively
     jr ra
 
 
@@ -696,11 +809,6 @@ generate_two_random_values:
 
     # Returning to the original ra:
     jr ra
-
-
-ensure_unique_coordinates:
-    RNG_LOOP:
-        # TODO: COMPLETE THIS!
 
 
 # Modifies the values of the given byte:
