@@ -23,7 +23,6 @@ initial_character:          .byte 0,0
 initial_box:                .byte 0,0
 initial_target:             .byte 0,0
 
-
 # Predetermined Object String Representations:
 empty_space:                .string " "
 newline:                    .string "\n"
@@ -33,6 +32,7 @@ target_str:                 .string "X"
 empty_tile:                 .string "."
 
 # Prompts
+introduction_prompt:        .string "Welcome to a game of Sokoban!\nEnter the number of players: "
 move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys! Or, use \"r\" to reset): "
 invalid_prompt:             .string "\nWoah there, please use your WASD keys and try again!\n"
 win_prompt:                 .string "\nCongratulations, you won!\n"
@@ -242,6 +242,68 @@ _start:
     # on the stack.
 
     # ADD GAME INTRO HERE!!!
+    # Print the game introduction
+    la a0, introduction_prompt
+    li a7, 4
+    ecall
+
+    # Collect num of players
+    li a7, 1
+    ecall
+    # Assert $a0 contains num of players
+
+    mv t1, a0  # $t1 now contains num of players
+    mv t0, zero  # loop incrementor
+
+    # Load Character
+    la s0, character
+    la s1, initial_character
+    # Load Box
+    la s2, box
+    la s3, initial_box
+    # Load Target
+    la s4, target
+    la s5, initial_target
+
+    # TODO: EVERYTHING WITH MULTIPLAYER
+    # Run this iff there are 2 or more players.
+    MAKE_GAMES:
+    #bge t0, t1, ???#########################################
+
+    # Give each player their own character, box, and target,
+    # from the same initial coords.
+
+
+    # Fully run the game for each player, before moving onto the next (if any).
+    # Track the scores of the player and store it into the stack (to build the leaderboard later)
+    # (figure out where your $ra aren't stored; maybe look ahead of (below) them)
+    # If the player restarts their game, reset the score
+    # (make sure this is made aware of for the user in the user guide).
+
+    # After running all games, print the leaderboard.
+
+    
+    # TODO: EVERYTHING WITH REPLAY
+    # Use the heap (because the stack is reserved for multiple players)!
+    
+    # Every time the focused player makes a move, store their move (store the WASD ASCII char) into the heap
+    # until their game is over.
+
+    # Take note of how far up the heap the focused player's moves reach when the game is over,
+    # and then start storing the next player's moves into the heap.
+    # For each player, maybe add an additional element into the char byte to denote the locations
+    # to where their moves begin and end in the heap.
+
+    # When the games are done, expect for all the moves to be stored in the heap,
+    # and also expect for the beginning and ending move locations in the heap to be noted.
+
+    # Then, simply simulate the game by running through the moves (WASD ASCII values) as stored in the heap (with looping ofc.)
+
+    # Maybe add some sort of delay timer to make the game visible to a human being.
+
+    # ALSO MAKE SURE TO MAKE YOUR OWN PSEUDORANDOM FUNCTION ONCE YOU'RE DONE
+
+    # AND ALSO DO THE USER GUIDE
 
     # Legend:
     # - Denote walls using '#'
