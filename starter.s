@@ -31,6 +31,7 @@ initial_target:             .byte 0,0
 # Predetermined Object String Representations:
 empty_space:                .string " "
 newline:                    .string "\n"
+newlines:                   .string "\n\n"
 character_str:              .string "@"
 box_str:                    .string "*"
 target_str:                 .string "X"
@@ -40,15 +41,23 @@ empty_tile:                 .string "."
 introduction_prompt:        .string "Welcome to a game of Sokoban!\n"
 player_num_prompt:          .string "\nEnter the number of players: "
 move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys! Or, use \"r\" to reset): "
-invalid_prompt:             .string "\nWoah there, please use your WASD keys and try again!\n"
-win_prompt:                 .string "\nCongratulations, you won!\n"
+invalid_prompt:             .string "\n==========\nWoah there, please use your WASD keys and try again!\n==========\n"
 gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively): "
 restart_prompt:             .string "\nRestarting game...\n"
 newgame_prompt:             .string "\nNew game...\n"
 quit_prompt:                .string "\nYou have quit the game. Thanks for playing!\n"
 invalid_endstate_prompt:    .string "\nTry again!\nUse \"r\" to restart, \"n\" to play a new game, or \"q\" to quit: "
-leaderboard_prompt:         .string "\nAll players have now finished their Sokoban game!\nHere's the leaderboard!:\n"
 invalid_player_num_prompt:  .string "\nYou must have at least 1 player. Please try again!\n"
+whos_playing_promptA:       .string "\nPlayer #"  # "Player #[n]"
+whos_playing_promptB:       .string "'s game:\n"  # "'s game:"
+leaderboard_prompt:         .string "All players have now finished their Sokoban game!\n\nHere's the leaderboard..."
+leaderboard_promptA:        .string "\nBest Games:\n"
+leaderboard_promptB:        .string "Player #"  # "Player #[n]"
+leaderboard_promptC:        .string ": "  # ": [num_moves]"
+leaderboard_promptD:        .string " moves\n"  # " moves"
+win_promptA:                .string "\nCongratulations, you won in "  # "Congratulations, you won in [num_moves]
+win_promptB:                .string " moves!\n"  # " moves!"
+
 
 .text
 .globl _start
@@ -273,10 +282,16 @@ _start:
     # Assert $a0 contains num of players
     ble a0, zero, GRAB_AGAIN
     mv s2, a0  # $s2 now contains num of players
-    mv s1, zero  # loop incrementor
+    
+    IF_RESTART:
+    mv s1, zero  # LOOP INCREMENTOR
 
     # Keep track of the current $sp
     mv s0, sp
+
+    # Set an increment amount to find a place in the stack that is
+    # at least 6 function calls down from the current $sp (6 words = 24 bytes):
+    li s11, -24
 
     # Fully run the game for each player, before moving onto the next (if any).
     # Track the move counts of the player and store it into the stack (to build the leaderboard later)
@@ -286,49 +301,153 @@ _start:
 
     # Play through all games, storing the move count in the stack after each.
     PLAY_ALL_GAMES:
-    bge s1, s2, LEADERBOARD
+        bge s1, s2, LEADERBOARD
 
-    li s4, -128  # New player flag
-    j restart_game  # Resets the game
+        li s4, -128  # New player flag
+        j restart_game  # Resets the game
 
-    # Assert that execution continues here
-    IS_NEW_PLAYER:
+        # Assert that execution continues here
+        IS_NEW_PLAYER:
+        li s4, 0  # to enable this player to reset if they mess up
 
-    # Assert that 1 byte of space is reserved
-    # for the move count of this game in the data memory.
-    la s3, move_count
-    lb zero, 0(s3)  # to reset the move count before the game
+        # Assert that 1 byte of space is reserved
+        # for the move count of this game in the data memory.
+        la s3, move_count
+        sb zero, 0(s3)  # to reset the move count before the game begins
 
-    # Run a game for this player:
-    j GAME_LOOP
+        # Run a game for this player:
+        j GAME_LOOP
 
-    AFTER_GAME:
-    # Assert move count for this game is stored in the data memory.
+        AFTER_GAME:
+        # Assert move count for this game is stored in the data memory.
 
-    # Find a place in the stack at least 3 function calls down
-    # from the current $sp (3 words = 12 bytes):
-    addi sp, sp, -12  # bring $sp to a useable space in the stack
-    slli t0, t0, 2  # multiply by 4
-    sub sp, sp, t0  # use the incrementor as an "offset"
+        # Bring $sp to a usable space in the stack
+        add sp, sp, s11  # assert $s11 is an appropriate decrement amount
+        slli t0, s1, 2  # multiply incrementor by 4
+        sub sp, sp, t0  # use the incrementor as an "offset"
 
-    # Stash the move count
-    la s5, move_count  # Grab the address of move_count
-    lb s6, 0(s5)  # Load the actual move count from data memory
-    sb s6, 0(sp)  # Store the actual move count into stack memory
+        # Take note of the address on the first time
+        bgt s1, zero, GO
+        mv s0, sp  # note the $sp
 
-    # Restore the $sp
-    mv sp, s0
+        GO:
+        # Stash the move count
+        la s5, move_count  # Grab the address of move_count
+        lb s6, 0(s5)  # Load the actual move count from data memory
+        sb s6, 0(sp)  # Store the actual move count into stack memory
 
-    # Next player
-    addi s1, s1, 1
-    j PLAY_ALL_GAMES
+        # Restore the $sp
+        mv sp, s0
+
+        # Next player
+        addi s1, s1, 1
+        j PLAY_ALL_GAMES
 
     # After running all games, print the leaderboard.
+
     LEADERBOARD:
     # Print the leaderboard prompt
     li a7, 4
     la a0, leaderboard_prompt
     ecall
+
+    # Assert $a7 is 4
+    la a0, leaderboard_promptA
+    ecall
+
+    # Take note of the current $sp address
+    mv s10, sp
+
+    # Bring the $sp to the corresponding move count of the first player
+    mv sp, s0  # assert $s0 has the desired address
+
+    mv s1, zero  # LOOP INCREMENTOR
+    # Assert $s2 is the number of players
+    PRINT_LEADERBOARD_RESULTS:
+        bge s1, s2, GAME_OVER
+
+        # Best score tracker:
+        li s9, 2147483646  # denote $s9 as the lowest number of moves thus far
+        # ^ Max out the lowest number of moves initially!
+
+        # Determine who has the best score (lowest number of moves):
+        li s3, 0  # new loop incrementor
+        # Still use $s2 for the number of players
+        FIND_BEST_SCORE:
+            bge s3, s2, FOUND_BEST_SCORE
+
+            # Grab the move count
+            lb s6, 0(sp)
+
+            # ======== DEBUG ===
+            # See move count
+            li a7, 1
+            mv a0, s6
+            ecall
+            li a7, 4
+            la a0, newline
+            ecall
+
+            # Compare to the lowest number of moves last seen
+            bgt s6, s9, LOOK_NEXT
+            # Passing the branch means this player has the best score
+            # from what's previously seen
+
+            # Track this $sp
+            mv s8, sp
+            # Track this move count
+            mv s9, s6
+
+            LOOK_NEXT:
+            addi sp, sp, -4  # go down the stack
+            addi s3, s3, 1  # add to the incrementor
+            j FIND_BEST_SCORE
+        FOUND_BEST_SCORE:
+        # First, bring $sp to the last-tracked (best score) player:
+        mv sp, s8
+
+        # Second, extract the number of moves associated with this best score:
+        lb s6, 0(sp)
+
+        # Third, determine which player number this score is assocaited with
+        # by using its address distance from the base location, $s0
+        add t0, s0, s11  # base location + decrement amount = desired location
+        sub t0, t0, s8  # desired location - last = 4 x (player number + 1)
+        # "player number + 1" because $sp is decremented before mem. access
+        srli t0, t0, 2  # $t0 becomes (player number + 1)
+        addi t0, t0, -1  # $ t0 becomes the player number
+
+        # Fourth, remove the recent best player as a possibility for
+        # being picked again (this ensures duplicate scores are considered
+        # uniquely on the leaderboard).
+        mv sp, s8  # to reach the desired memory address
+        li t1, 2147483647  # max int
+        lb t1, 0(sp)
+
+        # Then, restore the $sp to its original address:
+        mv sp, s10  # assert $s10 is the $sp before decrementing
+
+        # Print the best of the remaining pool:
+        li a7, 4
+        la a0, leaderboard_promptB
+        ecall
+        li a7, 1
+        mv a0, t0  # ========= PLAYER_NUMBER =========
+        ecall
+        li a7, 4
+        la a0, leaderboard_promptC
+        ecall
+        li a7, 1
+        mv a0, s6  # ========= NUM_MOVES_OF_PLAYER =========
+        ecall
+        li a7, 4
+        la a0, leaderboard_promptD
+        ecall
+
+        # Next best player:
+        addi s1, s1, 1
+        j PRINT_LEADERBOARD_RESULTS
+
     
     # TODO: EVERYTHING WITH REPLAY
     # Use the heap (because the stack is reserved for multiple players)!
@@ -353,7 +472,7 @@ _start:
     # AND ALSO DO THE USER GUIDE
 
     # Game Over
-    j GAME_OVER
+    j GAME_OVER  # This line acts as a safety, but it should not be reached!
 
     # Legend:
     # - Denote walls using '#'
@@ -364,14 +483,13 @@ _start:
     START_RESET:
 
     # The board will be printed starting from the game loop below.
-    # Print a newline at least:
-    li a7, 4
-    la a0, newline
-    ecall
 
     # Check if this is running a reset game for a new player:
     li t0, -128  # New player flag
-    beq t0, s4, IS_NEW_PLAYER
+    beq s4, t0, IS_NEW_PLAYER  # Compare to -128
+
+    # Check if this is the last player
+    bge s1, s2, IF_RESTART  # if yes, then restart all games
 
     # TODO: Enter a loop and wait for user input. Whenever user input is
     # received, update the gameboard state with the new location of the 
@@ -392,7 +510,7 @@ _start:
         
         # Check if a reset request was received
         li t0, -1  # Reset flag
-        beq t0, a0, restart_game
+        beq t0, a0, restart_game  # Compare to -1
 
         j GAME_LOOP
     GAME_OVER:
@@ -465,7 +583,7 @@ exit:
 # Feel free to use, modify, or add to them however you see fit.
 
 
-# Set all relevant registers to 0
+# Set all relevant a- and t-registers to 0
 flush_registers:
     li t0, 0
     li t1, 0
@@ -668,14 +786,15 @@ run_game:
 
         jal handle_move_direction
         # $a1 and $a2 will store the intended move's coords
+        # $a0 is -1 if a reset was intended
+
+        # CHECK RESET INTENDED:
+        li a7, -1  # -1 implies reset
+        beq a0, a7, RUN_GAME_END  # Compare to -1
 
         # Loop back if the user does not move with WASD:
         # The previous function call would set $a0 to 0
         bne a0, zero, VALID_MOVE
-
-        # CHECK RESET INTENDED:
-        li a7, -1  # -1 implies reset
-        beq a0, a7, RUN_GAME_END
 
         li a7, 4
         la a0, invalid_prompt
@@ -963,13 +1082,26 @@ print_board_state:
     lb a0, 1(t6)  # $a0 refers to the number of columns
     mv t6, a0  # make $t6 also refer to the number of columns
 
-    # Before the loop which prints the board, print the column numbers:
     mv t0, a0  # to stash $a0
+
+    # Print out which player is playing:
+    li a7, 4
+    la a0, whos_playing_promptA
+    ecall
+
+    li a7, 1
+    addi a0, s1, 1  # $s0 is (player number - 1)
+    ecall
+
+    li a7, 4
+    la a0, whos_playing_promptB
+    ecall
 
     li a7, 4
     la a0, newline
     ecall  # print a newline first
-
+    
+    # Before the loop which prints the board, print the column numbers:
     mv a0, t0  # to retrieve $a0
     jal print_column_numbers
 
@@ -1109,98 +1241,24 @@ handle_tile_printing:
 # End the game and report that the game is won!
 win_game:
     # Print out the win prompt:
+    # Print out how many moves this player took
     li a7, 4
-    la a0, win_prompt
+    la a0, win_promptA
+    ecall
+
+    li a7, 1
+    la a0, move_count
+    lb a0, 0(a0)
+    ecall
+
+    li a7, 4
+    la a0, win_promptB
+    ecall
+
+    # Print newlines
+    la a0, newlines
     ecall
 
     j AFTER_GAME
 
-################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
-
-# Move the character based on input direction
-# Arguments: $a0 = direction, (0 = left, 1 = right, 2 = up, 3 = down)
-# move_character:
-#     # Loading the character's coords:
-#     la t0, character  # load addr. of character
-#     lb t1, 0(t0)  # load character's x-coord into $t1
-#     lb t2, 1(t0)  # load character's y-coord into $t2
-
-#     # Load 1, 2, 3:
-#     li t3, 1
-#     li t4, 2
-#     li t5, 3
-
-#     # Checking the direction:
-#     beq a0, x0, move_left_char  # If $a0 == 0, move left
-#     beq a0, t3, move_right_char  # If $a0 == 1, move right
-#     beq a0, t4, move_up_char  # If $a0 == 2, move up
-#     beq a0, t5, move_down_char  # If $a0 == 3, move down
-
-#     # Check collision detection:
-#     # TODO: add this!
-
-#     # Store the new coords:
-#     sb t1, 0(t0)  # store x-coords into character
-#     sb t2, 1(t0)  # store y-coords into character
-
-#     # Return to $ra:
-#     jr ra
-
-# move_left_char:
-#     addi t1, t1, -1  # decrease x-coord (move left)
-#     j move_character_done
-
-# move_right_char:
-#     addi t1, t1, 1  # increase x-coord (move right)
-#     j move_character_done
-
-# move_up_char:
-#     addi t2, t2, -1  # decrease y-coord (move up; lower is greater)
-#     j move_character_done
-
-# move_down_char:
-#     addi t2, t2, 1  # increase y-coord
-#     # fall-thru
-
-# move_character_done:
-#     j move_character
-
-
-# # Move the box based on input direction
-# # Arguments: $a0 = direction (0 = left, 1 = right, 2 = up, 3 = down)
-# # Note: Uses the same logic as moving the character
-# move_box:
-#     # Load coords
-#     la t0, box
-#     lb t1, 0(t0)
-#     lb t2, 1(t0)
-
-#     # Check directions
-    
-
-#     # Store new coords
-
-#     # Return to $ra
-#     jr ra
-
-
-# # Move the target based on input direction
-# # Arguments: $a0 = direction (0 = left, 1 = right, 2 = up, 3 = down)
-# # Note: Uses the same logic as moving the character
-# move_target:
-#     # Load coords
-#     la t0, target
-#     lb t1, 0(t0)
-#     lb t2, 1(t0)
-
-#     # Check directions
-
-#     # Store new coords
-
-#     # Return to $ra
-#     jr ra
-
-
-# ensure_solveable:
-
-# check_collisions:
+######################### END OF CODE #########################
