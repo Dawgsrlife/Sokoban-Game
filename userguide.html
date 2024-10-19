@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>userguide.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<p>##############################################################################</p>
+<h3 id="author-alexander-he-meng">Author: Alexander He Meng</h3>
+<h3 id="course-csc258-by-utms-department-of-mathematical--computational-sciences">Course: CSC258 by UTM's Department of Mathematical &amp; Computational Sciences</h3>
+<h3 id="project-a-game-of-sokoban-in-risc-v-assembly">Project: A Game of Sokoban in RISC-V Assembly</h3>
+<h3 id="due-date-october-19th-2024">Due Date: October 19th, 2024</h3>
+<p>##############################################################################</p>
+<h1 id="user-guide---welcome-to-a-game-of-sokoban">User Guide - Welcome to a Game of Sokoban!</h1>
+<h2 id="introduction">=== Introduction ===</h2>
+<h4 id="sokoban-is-a-game-which-involves-boxes-targets-walls-and-a-player-character">- Sokoban is a game which involves boxes, targets, walls, and a player character.</h4>
+<h4 id="the-player-is-able-to-push-boxes-but-cannot-pull">- The player is able to push boxes, but cannot pull!</h4>
+<h4 id="the-objective-is-to-fill-all-targets-on-the-board-by-pushing-boxes-into-them">- The objective is to fill all targets on the board by pushing boxes into them.</h4>
+<h4 id="the-game-is-always-generated-to-be-solveable-so-if-the-player-is-stuck-they-must-restart-the-game">- The game is always generated to be solveable, so if the player is stuck, they must restart the game.</h4>
+<h2 id="using-cpulator-to-run-this-game">Using CPULator to run this game...</h2>
+<h3 id="with-a-browser-and-an-internet-connection-there-is-no-need-for-a-risc-v-processor-and-shoving-in-the-entirety-of-the-sokobans-code-for-a-case-of-complex-hardware">- With a browser and an internet connection, there is no need for a RISC-V processor and shoving in the entirety of the Sokoban.s code for a case of complex hardware.</h3>
+<h3 id="instead-navigate-to-httpscpulator01xznetsysrv32-spim-and-run-the-game-there-here-are-the-steps">- Instead, navigate to <code>https://cpulator.01xz.net/?sys=rv32-spim</code> and run the game there! Here are the steps:</h3>
+<p><img src="https://prnt.sc/ykAUEHjLtbk6" alt="Image of CPULator: https://prnt.sc/ykAUEHjLtbk6" title="This is an image of CPULator"></p>
+<h3 id="1-around-the-top-middle-of-the-website-hover-over-file-and-select-open-alternatively-run-ctrl--o-for-windows-os-users-or-cmd--o-for-mac-os-users">1. Around the top middle of the website, hover over <code>File</code> and select <code>Open...</code>; alternatively, run <code>CTRL</code> + <code>O</code> for Windows OS users, or <code>CMD</code> + <code>O</code> for MAC OS users.</h3>
+<p><img src="https://prnt.sc/45QtQFzSMqtS" alt="Image of Opening File: https://prnt.sc/45QtQFzSMqtS" title="This is an image of opening a file in CPULator"></p>
+<h3 id="2-make-sure-to-have-the-sokobans-file-in-an-easy-access-directory-on-your-pc-such-as-the-downloads-folder-and-simply-double-click-or-open-it">2. Make sure to have the Sokoban.s file in an easy-access directory on your PC (such as the <code>Downloads</code> folder), and simply double-click or open it.</h3>
+<p><img src="https://prnt.sc/ZXVqNhfFbUQ2" alt="Image of Opening File from File Explorer: https://prnt.sc/ZXVqNhfFbUQ2"></p>
+<h3 id="3-all-of-the-code-for-this-sokoban-game-should-develop-into-the-main-editor-panel-located-in-the-centre-of-the-website">3. All of the code for this Sokoban game should develop into the main <code>Editor</code> panel located in the centre of the website.</h3>
+<p><img src="https://prnt.sc/ZvjuZPMSjoG3" alt="Image of CPULator After Loading Sokoban.s File: https://prnt.sc/ZvjuZPMSjoG3"></p>
+<h3 id="4-now-to-run-and-start-interacting-with-the-game-file-click-the-compile-and-load-button-or-use-the-f5-shortcut-key-if-you-cannot-find-this-button-make-sure-youre-viewing-the-editor-panel-first-you-can-use-the-hotkeys-ctrlcmd--e-to-instantly-navigate-to-the-panel">4. Now, to run and start interacting with the game file, click the <code>Compile and Load</code> button (or use the <code>F5</code> shortcut key). If you cannot find this button, make sure you're viewing the <code>Editor</code> panel first; you can use the hotkeys <code>CTRL</code>/<code>CMD</code> + <code>E</code> to instantly navigate to the panel.</h3>
+<p><img src="https://prnt.sc/J7xSkvJm4PdG" alt="Image of Directions to Run RISC-V File: https://prnt.sc/J7xSkvJm4PdG"></p>
+<h3 id="5-then-click-the-continue-button-located-slightly-above-compile-and-load-or-just-left-of-the-top-middle-of-the-website">5. Then, click the <code>Continue</code> button located slightly above <code>Compile and Load</code>, or just left of the top-middle of the website.</h3>
+<p><img src="https://prnt.sc/ExQKJDXE131k" alt="Image of Clicking the Continue Button: https://prnt.sc/ExQKJDXE131k"></p>
+<h3 id="6-finally-focus-your-attention-to-the-terminal-window-youve-now-run-the-game-and-can-begin-to-play-just-make-sure-your-cursor-is-focused-on-the-window-as-well-which-you-can-do-with-a-quick-click-in-the-terminal-window">6. Finally, focus your attention to the <code>Terminal</code> window. You've now run the game and can begin to play! Just make sure your cursor is focused on the window as well, which you can do with a quick click in the Terminal window.</h3>
+<p><img src="https://prnt.sc/tQLZLAqrxuXZ" alt="Image of the Terminal Window: https://prnt.sc/tQLZLAqrxuXZ"></p>
+<h3 id="7-and-if-you-have-any-issues-such-as-with-messages-from-the-messages-panel-located-from-along-the-bottom-indicating-any-sort-of-error-simply-reload-the-page-ctrlcmd--r-and-repeat-steps-1-6-enjoy">7. And if you have any issues, such as with messages from the <code>Messages</code> panel (located from along the bottom) indicating any sort of error, simply reload the page (<code>CTRL</code>/<code>CMD</code> + <code>R</code>) and repeat <em>Steps 1-6</em>. Enjoy!</h3>
+<p><img src="https://prnt.sc/GS_sGiTT-bjk" alt="Image of Game in Console: https://prnt.sc/GS_sGiTT-bjk"></p>
+<h2 id="how-will-the-game-represent-walls-or-the-character">How will the game represent walls or the character?</h2>
+<ul>
+<li>In this implementation of the game, I end up not including any internal walls, so the walls are simply represented by the row and column numbers which surround the board (sort of like a border)!</li>
+<li>The character is represented by the '@' character.</li>
+</ul>
+<h2 id="how-can-the-user-change-the-gameboard-size">How can the user change the gameboard size?</h2>
+<ul>
+<li>The user can change the gameboard size by directly modifying the data memory in the .s file.</li>
+</ul>
+<h2 id="how-will-the-game-indicate-that-the-character-cannot-move-in-the-direction-indicated-by-the-user">How will the game indicate that the character cannot move in the direction indicated by the user?</h2>
+<ul>
+<li>The player character cannot move in the direction indicated by the user if and only if they try to exceed the boundaries of the board.</li>
+<li>In this case, the board will simply reflect no changes as the user is stuck in trying to collide with a wall boundary!</li>
+</ul>
+<h2 id="how-does-the-user-indicate-that-they-want-to-restart">How does the user indicate that they want to restart?</h2>
+<ul>
+<li>During each game, the user has the option to reset their board by entering 'r' or 'R' as input through the console. The game will continually print prompt hints which suggest which commands are available to the user.</li>
+<li>After a full multiplayer game, where all players have completed their games, they have the option to completely restart all their games with the previously generated board, also by entering 'r' or 'R'.</li>
+</ul>
+<h2 id="how-will-the-game-celebrate-the-player-successfully-solving-the-puzzle">How will the game celebrate the player successfully solving the puzzle?</h2>
+<ul>
+<li>After each user completes their puzzle, the game will indicate through the console that the user has won, along with the number of moves it took to complete the puzzle.</li>
+<li>After all players have completed their puzzle game, the game will indicate this, and it will proceeed to print a leaderboard of the top players.</li>
+</ul>
+<h2 id="enhancement-multiplayer">=== Enhancement: Multiplayer ===</h2>
+<ul>
+<li>Multiplayer is an enhancement which this Sokoban game incorporates, where the game prompts the user to enter the number of players for this game.</li>
+<li>The game will then consider as many simulations of the same generated game as there are players, and indicate above the board which player's turn it is.</li>
+<li>Each player will fully complete a play of the board until they win—that is, push the box into the target—before the next player begins to play.</li>
+<li>If a player gets stuck and/or chooses to reset their game during their play state, their moves will continually be tracked since their first. This means players cannot just play to figure out a strategy and simply reset the board prior to winning, only to exercise the optimal strategy after the reset.</li>
+<li>As hinted above, at the end of the game, the distributions of player scores (in least to greatest number of moves) is provided in the console, showing who performed the best to worst for the same generated game.</li>
+</ul>
+<h2 id="thats-it">That's It!</h2>
+<ul>
+<li>These are all the insights needed to run and play this game of Sokoban, coded in RISC-V Assembly; enjoy!</li>
+</ul>
+
+</body>
+</html>
