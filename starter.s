@@ -39,7 +39,7 @@ empty_tile:                 .string "."
 
 # Prompts
 introduction_prompt:        .string "Welcome to a game of Sokoban!\n"
-player_num_prompt:          .string "\nEnter the number of players: "
+player_num_prompt:          .string "\nEnter the number of players (press Enter too!): "
 move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys! Or, use \"r\" to reset): "
 invalid_prompt:             .string "\n==========\nWoah there, please use your WASD keys and try again!\n==========\n"
 gameover_prompt:            .string "\nWould you like to restart this game, play a new game, or quit?\n(Use \"r\", \"n\", or \"q\", respectively): "
@@ -286,9 +286,6 @@ _start:
     IF_RESTART:
     mv s1, zero  # LOOP INCREMENTOR
 
-    # Keep track of the current $sp
-    mv s0, sp
-
     # Set an increment amount to find a place in the stack that is
     # at least 6 function calls down from the current $sp (6 words = 24 bytes):
     li s11, -24
@@ -324,7 +321,7 @@ _start:
         # Bring $sp to a usable space in the stack
         add sp, sp, s11  # assert $s11 is an appropriate decrement amount
         slli t0, s1, 2  # multiply incrementor by 4
-        sub sp, sp, t0  # use the incrementor as an "offset"
+        sub sp, sp, t0  # use the incrementor as an "offset" factor
 
         # Take note of the address on the first time
         bgt s1, zero, GO
@@ -337,7 +334,8 @@ _start:
         sb s6, 0(sp)  # Store the actual move count into stack memory
 
         # Restore the $sp
-        mv sp, s0
+        add sp, sp, t0
+        sub sp, sp, s11
 
         # Next player
         addi s1, s1, 1
@@ -355,9 +353,6 @@ _start:
     la a0, leaderboard_promptA
     ecall
 
-    # Take note of the current $sp address
-    mv s10, sp
-
     # Bring the $sp to the corresponding move count of the first player
     mv sp, s0  # assert $s0 has the desired address
 
@@ -367,65 +362,60 @@ _start:
         bge s1, s2, GAME_OVER
 
         # Best score tracker:
-        li s9, 2147483646  # denote $s9 as the lowest number of moves thus far
-        # ^ Max out the lowest number of moves initially!
+        li s9, 126  # denote $s9 as the highest number of moves thus far
+        # ^ 1 less than maxing out the highest number of moves initially!
 
         # Determine who has the best score (lowest number of moves):
         li s3, 0  # new loop incrementor
         # Still use $s2 for the number of players
+
         FIND_BEST_SCORE:
             bge s3, s2, FOUND_BEST_SCORE
 
             # Grab the move count
             lb s6, 0(sp)
 
-            # ======== DEBUG ===
-            # See move count
-            li a7, 1
-            mv a0, s6
-            ecall
-            li a7, 4
-            la a0, newline
-            ecall
-
             # Compare to the lowest number of moves last seen
             bgt s6, s9, LOOK_NEXT
             # Passing the branch means this player has the best score
             # from what's previously seen
 
-            # Track this $sp
-            mv s8, sp
-            # Track this move count
+            # Track this player index
+            mv s8, s3
+            # Update the new best score (least moves)
             mv s9, s6
 
             LOOK_NEXT:
-            addi sp, sp, -4  # go down the stack
+            addi sp, sp, -4  # to go down the stack
             addi s3, s3, 1  # add to the incrementor
             j FIND_BEST_SCORE
         FOUND_BEST_SCORE:
-        # First, bring $sp to the last-tracked (best score) player:
-        mv sp, s8
+        # First, ensure that $sp is at the last-tracked (best score) player:
+        mv sp, s0
+        li t0, 1
+        TRAVERSE_TO_PLAYER:
+            bgt t0, s8, DONE_TRAVERSE
 
+            addi sp, sp, -4  # go down the stack
+            addi t0, t0, 1
+            j TRAVERSE_TO_PLAYER
+
+        DONE_TRAVERSE:
         # Second, extract the number of moves associated with this best score:
         lb s6, 0(sp)
 
-        # Third, determine which player number this score is assocaited with
-        # by using its address distance from the base location, $s0
-        add t0, s0, s11  # base location + decrement amount = desired location
-        sub t0, t0, s8  # desired location - last = 4 x (player number + 1)
-        # "player number + 1" because $sp is decremented before mem. access
-        srli t0, t0, 2  # $t0 becomes (player number + 1)
-        addi t0, t0, -1  # $ t0 becomes the player number
+        # Third, determine which player number this score is associated with:
+        addi t0, s8, 1  # assert $s8 is the player index => player num is +1
 
         # Fourth, remove the recent best player as a possibility for
         # being picked again (this ensures duplicate scores are considered
         # uniquely on the leaderboard).
-        mv sp, s8  # to reach the desired memory address
-        li t1, 2147483647  # max int
+        li t1, 127  # max
         lb t1, 0(sp)
 
         # Then, restore the $sp to its original address:
-        mv sp, s10  # assert $s10 is the $sp before decrementing
+        mv sp, s0
+        sub sp, sp, s11  # increment back!
 
         # Print the best of the remaining pool:
         li a7, 4
