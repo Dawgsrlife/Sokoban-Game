@@ -1090,6 +1090,9 @@ print_board_state:
     li a7, 4
     la a0, newline
     ecall  # print a newline first
+
+    la a0, empty_space
+    ecall  # then print an empty space
     
     # Before the loop which prints the board, print the column numbers:
     mv a0, t0  # to retrieve $a0
@@ -1134,6 +1137,10 @@ print_board_state:
         j FIRST_WHILE
     EXIT_FIRST:
     # After the while loop, print the column numbers.
+    li a7, 4
+    la a0, empty_space
+    ecall # print an empty space
+
     mv a0, t6
     jal print_column_numbers
 
