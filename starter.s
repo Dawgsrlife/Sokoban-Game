@@ -2,11 +2,10 @@
 # Author: Alexander He Meng
 # Course: CSC258 by UTM's Department of Mathematical & Computational Sciences
 # Project: A Game of Sokoban in RISC-V Assembly
-# Due Date: October 18th, 2024
+# Due Date: October 19th, 2024
 #
 # NOTES:
 # - In-line comments use the prefix '$' to denote registers.
-# - 
 ##############################################################################
 
 .data
