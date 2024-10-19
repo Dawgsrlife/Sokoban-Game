@@ -18,6 +18,11 @@ character:                  .byte 0,0  # Denote using '@'
 box:                        .byte 0,0  # Denote using '*'
 target:                     .byte 0,0  # Denote using 'X'
 
+# Trackers
+move_count:                 .byte 0  # Needed for Multiplayer enhancement
+last_move:                  .byte -1  # Needed for Replay enhancement
+# ^ This will become a char ASCII
+
 # Copy of Initial Object Coordinates
 initial_character:          .byte 0,0
 initial_box:                .byte 0,0
@@ -32,7 +37,8 @@ target_str:                 .string "X"
 empty_tile:                 .string "."
 
 # Prompts
-introduction_prompt:        .string "Welcome to a game of Sokoban!\nEnter the number of players: "
+introduction_prompt:        .string "Welcome to a game of Sokoban!\n"
+player_num_prompt:          .string "\nEnter the number of players: "
 move_prompt:                .string "\nMake your move!\nLeft, Right, Up, or Down?\n(Use your WASD keys! Or, use \"r\" to reset): "
 invalid_prompt:             .string "\nWoah there, please use your WASD keys and try again!\n"
 win_prompt:                 .string "\nCongratulations, you won!\n"
@@ -41,13 +47,15 @@ restart_prompt:             .string "\nRestarting game...\n"
 newgame_prompt:             .string "\nNew game...\n"
 quit_prompt:                .string "\nYou have quit the game. Thanks for playing!\n"
 invalid_endstate_prompt:    .string "\nTry again!\nUse \"r\" to restart, \"n\" to play a new game, or \"q\" to quit: "
+leaderboard_prompt:         .string "\nAll players have now finished their Sokoban game!\nHere's the leaderboard!:\n"
+invalid_player_num_prompt:  .string "\nYou must have at least 1 player. Please try again!\n"
 
 .text
 .globl _start
 
 _start:
     jal flush_registers
-    # MAYBE MAKE A FUNCTION TO CLEAN UP ALL THE REGISTERS!
+    # ^ CLEAN UP ALL THE REGISTERS!
 
     # TODO: Generate locations for the character, box, and target. Static
     # locations in memory have been provided for the (x, y) coordinates 
@@ -58,7 +66,6 @@ _start:
     # later. Regardless of the source of your "random" locations, make 
     # sure that none of the items are on top of each other and that the 
     # board is solvable.
-
 
     # Finding a random position for the character, box, and target:
     # Setup:
@@ -243,45 +250,85 @@ _start:
 
     # ADD GAME INTRO HERE!!!
     # Print the game introduction
-    la a0, introduction_prompt
     li a7, 4
+    la a0, introduction_prompt
+    ecall
+
+    j GRAB_NUM_PLAYERS
+
+    GRAB_AGAIN:
+    li a7, 4
+    la a0, invalid_player_num_prompt
+    ecall
+
+    GRAB_NUM_PLAYERS:
+    # Prompt first:
+    li a7, 4
+    la a0, player_num_prompt
     ecall
 
     # Collect num of players
-    li a7, 1
+    li a7, 5
     ecall
     # Assert $a0 contains num of players
+    ble a0, zero, GRAB_AGAIN
+    mv s2, a0  # $s2 now contains num of players
+    mv s1, zero  # loop incrementor
 
-    mv t1, a0  # $t1 now contains num of players
-    mv t0, zero  # loop incrementor
-
-    # Load Character
-    la s0, character
-    la s1, initial_character
-    # Load Box
-    la s2, box
-    la s3, initial_box
-    # Load Target
-    la s4, target
-    la s5, initial_target
-
-    # TODO: EVERYTHING WITH MULTIPLAYER
-    # Run this iff there are 2 or more players.
-    MAKE_GAMES:
-    #bge t0, t1, ???#########################################
-
-    # Give each player their own character, box, and target,
-    # from the same initial coords.
-
+    # Keep track of the current $sp
+    mv s0, sp
 
     # Fully run the game for each player, before moving onto the next (if any).
-    # Track the scores of the player and store it into the stack (to build the leaderboard later)
+    # Track the move counts of the player and store it into the stack (to build the leaderboard later)
     # (figure out where your $ra aren't stored; maybe look ahead of (below) them)
-    # If the player restarts their game, reset the score
+    # If the player restarts their game, don't reset the move count.
     # (make sure this is made aware of for the user in the user guide).
 
-    # After running all games, print the leaderboard.
+    # Play through all games, storing the move count in the stack after each.
+    PLAY_ALL_GAMES:
+    bge s1, s2, LEADERBOARD
 
+    li s4, -128  # New player flag
+    j restart_game  # Resets the game
+
+    # Assert that execution continues here
+    IS_NEW_PLAYER:
+
+    # Assert that 1 byte of space is reserved
+    # for the move count of this game in the data memory.
+    la s3, move_count
+    lb zero, 0(s3)  # to reset the move count before the game
+
+    # Run a game for this player:
+    j GAME_LOOP
+
+    AFTER_GAME:
+    # Assert move count for this game is stored in the data memory.
+
+    # Find a place in the stack at least 3 function calls down
+    # from the current $sp (3 words = 12 bytes):
+    addi sp, sp, -12  # bring $sp to a useable space in the stack
+    slli t0, t0, 2  # multiply by 4
+    sub sp, sp, t0  # use the incrementor as an "offset"
+
+    # Stash the move count
+    la s5, move_count  # Grab the address of move_count
+    lb s6, 0(s5)  # Load the actual move count from data memory
+    sb s6, 0(sp)  # Store the actual move count into stack memory
+
+    # Restore the $sp
+    mv sp, s0
+
+    # Next player
+    addi s1, s1, 1
+    j PLAY_ALL_GAMES
+
+    # After running all games, print the leaderboard.
+    LEADERBOARD:
+    # Print the leaderboard prompt
+    li a7, 4
+    la a0, leaderboard_prompt
+    ecall
     
     # TODO: EVERYTHING WITH REPLAY
     # Use the heap (because the stack is reserved for multiple players)!
@@ -305,6 +352,9 @@ _start:
 
     # AND ALSO DO THE USER GUIDE
 
+    # Game Over
+    j GAME_OVER
+
     # Legend:
     # - Denote walls using '#'
     # - Denote the character using '@'
@@ -318,6 +368,10 @@ _start:
     li a7, 4
     la a0, newline
     ecall
+
+    # Check if this is running a reset game for a new player:
+    li t0, -128  # New player flag
+    beq t0, s4, IS_NEW_PLAYER
 
     # TODO: Enter a loop and wait for user input. Whenever user input is
     # received, update the gameboard state with the new location of the 
@@ -347,15 +401,14 @@ _start:
         la a0, gameover_prompt
         ecall
 
-        jal take_endstate_input
-        # Assert $a0 contains the valid character
-
-
+        j take_endstate_input
 
     # TODO: That's the base game! Now, pick a pair of enhancements and
     # consider how to implement them.
 
     # ENHANCEMENTS:
+
+    # Multiplayer and Replay done above.
 
 
 # Resets the board for a new game of Sokoban
@@ -765,6 +818,12 @@ handle_move_behaviour:
     la t0, character
     sb t5, 0(t0)
     sb t6, 1(t0)
+    
+    # Increment the move count:
+    la a0, move_count
+    lb t0, 0(a0)  # $t0 refers to the actual move count
+    addi t0, t0, 1  # increment by 1
+    sb t0, 0(a0)  # update the move count in data memory
 
     NO_UPDATES:
     # Retrieve $ra
@@ -904,12 +963,18 @@ print_board_state:
     lb a0, 1(t6)  # $a0 refers to the number of columns
     mv t6, a0  # make $t6 also refer to the number of columns
 
-    # Initialize the row counter
-    li t0, 0  # loop incrementor for FIRST_WHILE
-
     # Before the loop which prints the board, print the column numbers:
+    mv t0, a0  # to stash $a0
+
+    li a7, 4
+    la a0, newline
+    ecall  # print a newline first
+
+    mv a0, t0  # to retrieve $a0
     jal print_column_numbers
 
+    # Initialize the row counter
+    li t0, 0  # loop incrementor for FIRST_WHILE
     # First loop - all rows
     FIRST_WHILE:
         bge t0, t2, EXIT_FIRST  # continue if y-coord in [0, gridsize - 1]
@@ -1048,7 +1113,7 @@ win_game:
     la a0, win_prompt
     ecall
 
-    j GAME_OVER
+    j AFTER_GAME
 
 ################################################# EVERYTHING BELOW THIS HAS NOT BEEN CHECKED ####################################################
 
