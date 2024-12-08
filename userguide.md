@@ -1,8 +1,7 @@
 ##############################################################################
 ### Author: Alexander He Meng
-### Course: CSC258 by UTM's Department of Mathematical & Computational Sciences
 ### Project: A Game of Sokoban in RISC-V Assembly
-### Due Date: October 19th, 2024
+### Last Updated: October 19th, 2024
 ##############################################################################
 
 # User Guide - Welcome to a Game of Sokoban!
