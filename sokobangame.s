@@ -1,8 +1,7 @@
 ##############################################################################
-# Author: Alexander He Meng
-# Course: CSC258 by UTM's Department of Mathematical & Computational Sciences
+# Author: AlexanderTheMango
 # Project: A Game of Sokoban in RISC-V Assembly
-# Due Date: October 19th, 2024
+# Last Updated: October 19th, 2024
 #
 # NOTES:
 # - In-line comments use the prefix '$' to denote registers.
@@ -64,16 +63,6 @@ win_promptB:                .string " moves!\n"  # " moves!"
 _start:
     jal flush_registers
     # ^ CLEAN UP ALL THE REGISTERS!
-
-    # TODO: Generate locations for the character, box, and target. Static
-    # locations in memory have been provided for the (x, y) coordinates 
-    # of each of these elements.
-    # 
-    # There is a notrand function that you can use to start with. It's 
-    # really not very good; you will replace it with your own rand function
-    # later. Regardless of the source of your "random" locations, make 
-    # sure that none of the items are on top of each other and that the 
-    # board is solvable.
 
     # Finding a random position for the character, box, and target:
     # Setup:
@@ -246,15 +235,6 @@ _start:
     # Load the same into a copy:
     la a0, initial_target
     jal modify_byte_array
-   
-    # TODO: Now, print the gameboard. Select symbols to represent the walls,
-    # character, box, and target. Write a function that uses the location of
-    # the various elements (in memory) to construct a gameboard and that 
-    # prints that board one character at a time.
-    # HINT: You may wish to construct the string that represents the board
-    # and then print that string with a single syscall. If you do this, 
-    # consider whether you want to place this string in static memory or 
-    # on the stack.
 
     # ADD GAME INTRO HERE!!!
     # Print the game introduction
@@ -288,12 +268,6 @@ _start:
     # Set an increment amount to find a place in the stack that is
     # at least 6 function calls down from the current $sp (6 words = 24 bytes):
     li s11, -24
-
-    # Fully run the game for each player, before moving onto the next (if any).
-    # Track the move counts of the player and store it into the stack (to build the leaderboard later)
-    # (figure out where your $ra aren't stored; maybe look ahead of (below) them)
-    # If the player restarts their game, don't reset the move count.
-    # (make sure this is made aware of for the user in the user guide).
 
     # Play through all games, storing the move count in the stack after each.
     PLAY_ALL_GAMES:
