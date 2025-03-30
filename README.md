@@ -17,47 +17,70 @@ _Last Updated: October 19th, 2024_
 
 ## 🟣 Introduction
 
-Sokoban is a logic puzzle game where you push boxes onto target tiles within a grid.  
-In this RISC-V Assembly implementation:
-- You **push** boxes but **cannot pull**.
-- The board is always solvable.
-- Playable entirely in your browser without needing real RISC-V hardware.
+Sokoban is a logic puzzle game where you control a player to push boxes onto targets.  
+This implementation is written entirely in **RISC-V Assembly**.
+
+Features:
+- Push-only movement.
+- Guaranteed solvable boards.
+- Multiplayer support.
+- Works directly on the CPULator RV32 SPIM simulator.
 
 ---
 
 ## 🟢 Running the Game via CPULator
 
-With an internet connection, you can run this game without any additional setup.
+> 💡 **Tip:** You do NOT need a real RISC-V processor.
 
-### Step-by-Step:
+---
 
-1. Visit [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
-   ![Step 1](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/1.png)
+### Step 1 — Open CPULator
+Visit 👉 [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
+![Step 1](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/1.png)
 
-2. Load the game:  
-   - Click `File > Open...`  
-   - Or press `Ctrl + O` (Windows) / `Cmd + O` (Mac)  
-   ![Step 2](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/2.png)
+---
 
-3. Select `Sokoban.s` from your computer (suggested: place it in `Downloads`).  
-   ![Step 3](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/3.png)
+### Step 2 — Load the Game  
+Click `File > Open...` or use `Ctrl + O` / `Cmd + O`.  
+![Step 2](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/2.png)
 
-4. The code will now load into the editor.  
-   ![Step 4](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/4.png)
+---
 
-5. Compile the game:  
-   - Click `Compile and Load`  
-   - Or press `F5`  
-   ![Step 5](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/5.png)
+### Step 3 — Select the Source File  
+Choose `sokobangame.s` from your local folder.  
+![Step 3](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/3.png)
 
-6. Click `Continue` to start.  
-   ![Step 6](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/6.png)
+---
 
-7. Focus on the `Terminal` panel and start playing!  
-   ![Step 7](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/7.png)
+### Step 4 — Loaded into the Editor  
+Your code will appear in the center panel.  
+![Step 4](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/4.png)
 
-8. 💡 If you encounter errors, reload the page (`Ctrl + R` / `Cmd + R`) and restart from Step 1.  
-   ![Step 8](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/8.png)
+---
+
+### Step 5 — Compile  
+Click `Compile and Load` or press `F5`.  
+![Step 5](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/5.png)
+
+---
+
+### Step 6 — Run the Game  
+Click `Continue`.  
+![Step 6](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/6.png)
+
+---
+
+### Step 7 — Terminal Display  
+Focus on the terminal to start playing!  
+![Step 7](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/7.png)
+
+---
+
+### Step 8 — In-Game Example  
+Move using WASD, Reset using `R`.  
+![Step 8](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/8.png)
+
+> ⚠ **Note:** If you encounter errors, press `Ctrl + R` to reload and restart from Step 2.
 
 ---
 
@@ -75,48 +98,43 @@ With an internet connection, you can run this game without any additional setup.
 
 ## ✨ Features
 
-- **Guaranteed Solvable Boards**  
-- **Multiplayer Mode**  
-- **Leaderboard Generation**  
-- **Player Character**: `@`  
-- **Box**: `*`  
-- **Target**: `X`  
-- **Walls**: Outer borders (no internal walls)
+- Guaranteed solvable board generation
+- Multiplayer mode
+- Leaderboard generation
+- Replay-tracking to prevent cheating via resets
+- Minimal but readable terminal UI
+- 100% written in **RISC-V Assembly**
 
 ---
 
 ## ⚙️ Customization
 
-### Changing the Board Size
-In `Sokoban.s`, adjust the `gridsize` variable in the `.data` section to change the board's dimensions.
+### Change Board Size
+Modify the `.data` section of `sokobangame.s` and adjust the `gridsize`.
 
-### Resetting the Game
-Type `r` at any time to restart your current attempt.
+### Reset
+Type `r` anytime during your turn.
 
 ### Multiplayer
-Specify the number of players at the start.  
-Each player will play the same generated board in turn.  
-After all players finish, a leaderboard will be displayed ranking players by move count.
+Enter the number of players at the start.  
+After all players finish, the game prints a sorted leaderboard.
 
 ---
 
 ## 🥇 Enhancements
 
-- **Multiplayer Tracking**:  
-  Each player is individually tracked. Resets do not erase the move count.
-  
-- **Replay Awareness**:  
-  Players can't cheese by resetting to only save optimal runs.
-
-- **Leaderboard**:  
-  Printed after all players finish.
+- 🔄 **Replay-aware resets** (moves still count)
+- 🏆 **Leaderboard** shown at the end
+- 🎭 **Equal board for all players** (fair multiplayer)
+- 🟣 **Fully assembly-level** implementation
 
 ---
 
 ## 🙌 Credits
 
-Made entirely in **RISC-V Assembly** by Alexander He Meng.
+Developed by Alexander He Meng (alex.meng@mail.utoronto.ca)  
+Made with ❤️ and lots of registers.
 
 ---
 
-> 💬 Feel free to fork, modify, and play around with the code!
+> 💬 Feel free to fork, play, or contribute!
