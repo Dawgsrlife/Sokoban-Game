@@ -32,32 +32,32 @@ With an internet connection, you can run this game without any additional setup.
 ### Step-by-Step:
 
 1. Visit [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
-   ![CPULator Overview](https://prnt.sc/ykAUEHjLtbk6)
+   ![Step 1](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/1.png)
 
 2. Load the game:  
    - Click `File > Open...`  
    - Or press `Ctrl + O` (Windows) / `Cmd + O` (Mac)  
-   ![Open File Dialog](https://prnt.sc/45QtQFzSMqtS)
+   ![Step 2](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/2.png)
 
 3. Select `Sokoban.s` from your computer (suggested: place it in `Downloads`).  
-   ![Select File](https://prnt.sc/ZXVqNhfFbUQ2)
+   ![Step 3](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/3.png)
 
 4. The code will now load into the editor.  
-   ![Editor Loaded](https://prnt.sc/ZvjuZPMSjoG3)
+   ![Step 4](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/4.png)
 
 5. Compile the game:  
    - Click `Compile and Load`  
    - Or press `F5`  
-   ![Compile & Load](https://prnt.sc/J7xSkvJm4PdG)
+   ![Step 5](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/5.png)
 
 6. Click `Continue` to start.  
-   ![Continue Button](https://prnt.sc/ExQKJDXE131k)
+   ![Step 6](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/6.png)
 
 7. Focus on the `Terminal` panel and start playing!  
-   ![Terminal View](https://prnt.sc/tQLZLAqrxuXZ)
+   ![Step 7](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/7.png)
 
 8. 💡 If you encounter errors, reload the page (`Ctrl + R` / `Cmd + R`) and restart from Step 1.  
-   ![In-Game View](https://prnt.sc/GS_sGiTT-bjk)
+   ![Step 8](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/8.png)
 
 ---
 
@@ -120,4 +120,3 @@ Made entirely in **RISC-V Assembly** by Alexander He Meng.
 ---
 
 > 💬 Feel free to fork, modify, and play around with the code!
-
