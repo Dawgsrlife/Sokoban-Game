@@ -1,5 +1,5 @@
 # 🎮 Sokoban — RISC-V Assembly  
-_A Game of Sokoban by Alexander He Meng_  
+_A Sokoban Puzzle Game by Alexander He Meng_  
 _Last Updated: October 19th, 2024_
 
 ![Built with RISC-V](https://img.shields.io/badge/Built%20with-RISC--V%20Assembly-blueviolet)
@@ -9,158 +9,103 @@ _Last Updated: October 19th, 2024_
 
 ---
 
-## 📜 Table of Contents
-- [Introduction](#introduction)
-- [Running the Game via CPULator](#running-the-game-via-cpulator)
-- [Controls](#controls)
-- [Features](#features)
-- [Customization](#customization)
-- [Enhancements](#enhancements)
-- [Example Gameplay](#example-gameplay)
-- [Credits](#credits)
+## 📚 Overview
+
+> **Sokoban** is a classic puzzle game where you push boxes (`*`) onto target positions (`X`).  
+This project is a **pure RISC-V Assembly** implementation, playable entirely inside CPULator (a browser-based simulator).  
+
+💡 No installation, no build system — just run it directly online.
 
 ---
 
-## 🟣 Introduction
+## 🎯 Features
 
-Sokoban is a legendary puzzle game about pushing boxes (`*`) onto targets (`X`).  
-This implementation is fully written in **RISC-V Assembly**, made to run directly on **CPULator** without extra setup.
-
-Features:
-- Push-only box movement.
-- Guaranteed solvable levels.
-- Optional multiplayer mode.
-- Runs fully in your browser.
+- ✅ Guaranteed solvable puzzles
+- ✅ Multiplayer Mode (up to any number of players)
+- ✅ Reset-aware Move Tracking
+- ✅ Leaderboard after all players finish
+- ✅ Simple, responsive Terminal UI
+- ✅ 100% Assembly implementation
 
 ---
 
-## 🟢 Running the Game via CPULator
+## 💻 Running the Game
 
-> 💡 **Tip:** You do NOT need any hardware or special toolchain. Just a browser.
-
----
-
-### Step 1 — Launch CPULator  
-[👉 CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
+### ✅ Step 1 — Launch Simulator  
+Open [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
 ![Step 1](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/1.png)
 
 ---
 
-### Step 2 — Load Sokoban  
-Click `File > Open...` or press `Ctrl + O` / `Cmd + O`.  
+### ✅ Step 2 — Open the Source File  
+Go to `File > Open...` or press `Ctrl + O` / `Cmd + O`.  
 ![Step 2](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/2.png)
 
 ---
 
-### Step 3 — Select Source  
-Choose `sokobangame.s` from your computer.  
+### ✅ Step 3 — Load `sokobangame.s`  
+Select your downloaded `sokobangame.s` file.  
 ![Step 3](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/3.png)
 
 ---
 
-### Step 4 — Editor View  
-Your code appears here.  
-![Step 4](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/4.png)
-
----
-
-### Step 5 — Compile  
+### ✅ Step 4 — Compile the Program  
 Click `Compile and Load` or press `F5`.  
 ![Step 5](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/5.png)
 
 ---
 
-### Step 6 — Run  
-Click `Continue` to begin.  
+### ✅ Step 5 — Run  
+Click `Continue`.  
 ![Step 6](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/6.png)
 
 ---
 
-### Step 7 — Play!  
-The terminal is now active.  
+### ✅ Step 6 — Start Playing  
+The Terminal will display your game!  
 ![Step 7](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/7.png)
-
----
-
-### Step 8 — Example Gameplay  
-![Step 8](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/8.png)
-
----
-
-> ⚠ **If you see any errors**, reload the page (`Ctrl + R`) and retry from Step 2.
 
 ---
 
 ## 🎮 Controls
 
-| Action | Input |
-|--------|-------|
+| Action | Key |
+|--------|------|
 | Move Up | `W` |
 | Move Down | `S` |
 | Move Left | `A` |
 | Move Right | `D` |
-| Reset Board | `R` |
+| Reset | `R` |
 
-> ✅ **Tip:** Commands are case-insensitive (`w`, `W` both work)
-
----
-
-## ✨ Features
-
-- ✔ **Guaranteed solvable board generation**  
-- ✔ **Multiplayer support**  
-- ✔ **Leaderboard generation**  
-- ✔ **Replay-aware move tracking**  
-- ✔ **Minimal and clear terminal UI**  
-- ✔ 100% low-level implementation in **RISC-V Assembly**
+> 💡 Resets do not clear your move history (important for fair multiplayer scoring).
 
 ---
 
-## ⚙️ Customization
+## 🛠️ Customization
 
 ### Change Board Size
-Modify the `.data` section:
 
 ```asm
 .data
-gridsize: .byte 8,8   # Change to any dimensions
+gridsize: .byte 8,8   # Change dimensions here
 ```
 
 ---
 
-### Multiplayer
-The game will prompt:
+## 🧑‍🤝‍🧑 Multiplayer Mode
+
+Before starting, you’ll be asked:
 
 ```text
-Enter the number of players (press Enter too!):
+Enter the number of players:
 ```
 
-Specify the number of players, and each will take turns solving the board.  
-A **leaderboard** will appear after all players finish.
+Each player gets the same randomly generated board.  
+The game automatically displays a **leaderboard** at the end.
 
 ---
 
-### Reset Anytime
-Just press:
-
-```text
-r
-```
-
-to reset your current run without affecting your move history (used for fairness in multiplayer).
-
----
-
-## 🥇 Enhancements
-
-- 🟣 **Replay-aware**: Resetting does not clear move counts.
-- 🟣 **Leaderboard**: Sorted automatically.
-- 🟣 **Shared Board**: Same randomly generated board for all players.
-- 🟣 **Fair-play Enforcement**: No reset abuse.
-
----
-
-## ✅ Example In-Game Prompt
+## 🥇 Example Prompt
 
 ```text
 Make your move!
@@ -170,13 +115,28 @@ Left, Right, Up, or Down?
 
 ---
 
-## 🙌 Credits
+## 🏆 Showcase / Demo
 
-Developed by Alexander He Meng  
-Contact: alex.meng@mail.utoronto.ca  
-Course: CSC258 — Computer Organization  
-Institution: University of Toronto
+Coming soon!  
+Recommended: Use **screen-to-gif** to capture CPULator gameplay for your Devpost demo.
 
 ---
 
-> 💬 Contributions, forks, and pull requests are welcome!
+## ✅ Notes for Devpost
+> If you're submitting:
+- Include screenshots exactly like above
+- Optionally record gameplay
+- Link this README directly under your “Demo / Setup” section
+- Clearly state: "Playable fully online using CPULator (no install needed)"
+
+---
+
+## 🙌 Author
+
+**Alexander He Meng**  
+Email: alex.meng@mail.utoronto.ca  
+GitHub: [github.com/Dawgsrlife](https://github.com/Dawgsrlife)  
+
+---
+
+> 💬 Contributions, forks, and PRs welcome!
