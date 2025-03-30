@@ -1,61 +1,123 @@
-##############################################################################
-### Author: Alexander He Meng
-### Project: A Game of Sokoban in RISC-V Assembly
-### Last Updated: October 19th, 2024
-##############################################################################
+# 🎮 Sokoban — RISC-V Assembly
+_A Game of Sokoban by Alexander He Meng_  
+_Last Updated: October 19th, 2024_
 
-# User Guide - Welcome to a Game of Sokoban!
+---
 
-## === Introduction ===
-#### - Sokoban is a game which involves boxes, targets, walls, and a player character.
-#### - The player is able to push boxes, but cannot pull!
-#### - The objective is to fill all targets on the board by pushing boxes into them.
-#### - The game is always generated to be solveable, so if the player is stuck, they must restart the game.
+## 📜 Table of Contents
+- [Introduction](#introduction)
+- [Running the Game via CPULator](#running-the-game-via-cpulator)
+- [Controls](#controls)
+- [Features](#features)
+- [Customization](#customization)
+- [Enhancements](#enhancements)
+- [Credits](#credits)
 
-## Using CPULator to run this game...
-### - With a browser and an internet connection, there is no need for a RISC-V processor and shoving in the entirety of the Sokoban.s code for a case of complex hardware.
-### - Instead, navigate to `https://cpulator.01xz.net/?sys=rv32-spim` and run the game there! Here are the steps:
-![Image of CPULator: https://prnt.sc/ykAUEHjLtbk6](https://prnt.sc/ykAUEHjLtbk6 "This is an image of CPULator")
-### 1. Around the top middle of the website, hover over `File` and select `Open...`; alternatively, run `CTRL` + `O` for Windows OS users, or `CMD` + `O` for MAC OS users.
-![Image of Opening File: https://prnt.sc/45QtQFzSMqtS](https://prnt.sc/45QtQFzSMqtS "This is an image of opening a file in CPULator")
-### 2. Make sure to have the Sokoban.s file in an easy-access directory on your PC (such as the `Downloads` folder), and simply double-click or open it.
-![Image of Opening File from File Explorer: https://prnt.sc/ZXVqNhfFbUQ2](https://prnt.sc/ZXVqNhfFbUQ2)
-### 3. All of the code for this Sokoban game should develop into the main `Editor` panel located in the centre of the website.
-![Image of CPULator After Loading Sokoban.s File: https://prnt.sc/ZvjuZPMSjoG3](https://prnt.sc/ZvjuZPMSjoG3)
-### 4. Now, to run and start interacting with the game file, click the `Compile and Load` button (or use the `F5` shortcut key). If you cannot find this button, make sure you're viewing the `Editor` panel first; you can use the hotkeys `CTRL`/`CMD` + `E` to instantly navigate to the panel.
-![Image of Directions to Run RISC-V File: https://prnt.sc/J7xSkvJm4PdG](https://prnt.sc/J7xSkvJm4PdG)
-### 5. Then, click the `Continue` button located slightly above `Compile and Load`, or just left of the top-middle of the website.
-![Image of Clicking the Continue Button: https://prnt.sc/ExQKJDXE131k](https://prnt.sc/ExQKJDXE131k)
-### 6. Finally, focus your attention to the `Terminal` window. You've now run the game and can begin to play! Just make sure your cursor is focused on the window as well, which you can do with a quick click in the Terminal window.
-![Image of the Terminal Window: https://prnt.sc/tQLZLAqrxuXZ](https://prnt.sc/tQLZLAqrxuXZ)
-### 7. And if you have any issues, such as with messages from the `Messages` panel (located from along the bottom) indicating any sort of error, simply reload the page (`CTRL`/`CMD` + `R`) and repeat *Steps 1-6*. Enjoy!
-![Image of Game in Console: https://prnt.sc/GS_sGiTT-bjk](https://prnt.sc/GS_sGiTT-bjk)
+---
 
-## How will the game represent walls or the character?
-- In this implementation of the game, I end up not including any internal walls, so the walls are simply represented by the row and column numbers which surround the board (sort of like a border)!
-- The character is represented by the '@' character.
+## 🟣 Introduction
 
-## How can the user change the gameboard size?
-- The user can change the gameboard size by directly modifying the data memory in the .s file.
+Sokoban is a logic puzzle game where you push boxes onto target tiles within a grid.  
+In this RISC-V Assembly implementation:
+- You **push** boxes but **cannot pull**.
+- The board is always solvable.
+- Playable entirely in your browser without needing real RISC-V hardware.
 
-## How will the game indicate that the character cannot move in the direction indicated by the user?
-- The player character cannot move in the direction indicated by the user if and only if they try to exceed the boundaries of the board.
-- In this case, the board will simply reflect no changes as the user is stuck in trying to collide with a wall boundary!
+---
 
-## How does the user indicate that they want to restart?
-- During each game, the user has the option to reset their board by entering 'r' or 'R' as input through the console. The game will continually print prompt hints which suggest which commands are available to the user.
-- After a full multiplayer game, where all players have completed their games, they have the option to completely restart all their games with the previously generated board, also by entering 'r' or 'R'.
+## 🟢 Running the Game via CPULator
 
-## How will the game celebrate the player successfully solving the puzzle?
-- After each user completes their puzzle, the game will indicate through the console that the user has won, along with the number of moves it took to complete the puzzle.
-- After all players have completed their puzzle game, the game will indicate this, and it will proceeed to print a leaderboard of the top players.
+With an internet connection, you can run this game without any additional setup.
 
-## === Enhancement: Multiplayer ===
-- Multiplayer is an enhancement which this Sokoban game incorporates, where the game prompts the user to enter the number of players for this game.
-- The game will then consider as many simulations of the same generated game as there are players, and indicate above the board which player's turn it is.
-- Each player will fully complete a play of the board until they win—that is, push the box into the target—before the next player begins to play.
-- If a player gets stuck and/or chooses to reset their game during their play state, their moves will continually be tracked since their first. This means players cannot just play to figure out a strategy and simply reset the board prior to winning, only to exercise the optimal strategy after the reset.
-- As hinted above, at the end of the game, the distributions of player scores (in least to greatest number of moves) is provided in the console, showing who performed the best to worst for the same generated game.
+### Step-by-Step:
 
-## That's It!
-- These are all the insights needed to run and play this game of Sokoban, coded in RISC-V Assembly; enjoy!
+1. Visit [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
+   ![CPULator Overview](https://prnt.sc/ykAUEHjLtbk6 "CPULator Overview")
+
+2. Load the game:  
+   - Click `File > Open...`  
+   - Or press `Ctrl + O` (Windows) / `Cmd + O` (Mac)  
+   ![Open File Dialog](https://prnt.sc/45QtQFzSMqtS "Open File")
+
+3. Select `Sokoban.s` from your computer (suggested: place it in `Downloads`).  
+   ![Select File](https://prnt.sc/ZXVqNhfFbUQ2)
+
+4. The code will now load into the editor.  
+   ![Editor Loaded](https://prnt.sc/ZvjuZPMSjoG3)
+
+5. Compile the game:  
+   - Click `Compile and Load`  
+   - Or press `F5`  
+   ![Compile & Load](https://prnt.sc/J7xSkvJm4PdG)
+
+6. Click `Continue` to start.  
+   ![Continue Button](https://prnt.sc/ExQKJDXE131k)
+
+7. Focus on the `Terminal` panel and start playing!  
+   ![Terminal View](https://prnt.sc/tQLZLAqrxuXZ)
+
+8. 💡 If you encounter errors, reload the page (`Ctrl + R` / `Cmd + R`) and restart from Step 1.  
+   ![In-Game View](https://prnt.sc/GS_sGiTT-bjk)
+
+---
+
+## 🎮 Controls
+
+| Action | Input |
+|--------|-------|
+| Move Up | `W` or `w` |
+| Move Down | `S` or `s` |
+| Move Left | `A` or `a` |
+| Move Right | `D` or `d` |
+| Reset Board | `R` or `r` |
+
+---
+
+## ✨ Features
+
+- **Guaranteed Solvable Boards**  
+- **Multiplayer Mode**  
+- **Leaderboard Generation**  
+- **Player Character**: `@`  
+- **Box**: `*`  
+- **Target**: `X`  
+- **Walls**: Outer borders (no internal walls)
+
+---
+
+## ⚙️ Customization
+
+### Changing the Board Size
+In `Sokoban.s`, adjust the `gridsize` variable in the `.data` section to change the board's dimensions.
+
+### Resetting the Game
+Type `r` at any time to restart your current attempt.
+
+### Multiplayer
+Specify the number of players at the start.  
+Each player will play the same generated board in turn.  
+After all players finish, a leaderboard will be displayed ranking players by move count.
+
+---
+
+## 🥇 Enhancements
+
+- **Multiplayer Tracking**:  
+  Each player is individually tracked. Resets do not erase the move count.
+  
+- **Replay Awareness**:  
+  Players can't cheese by resetting to only save optimal runs.
+
+- **Leaderboard**:  
+  Printed after all players finish.
+
+---
+
+## 🙌 Credits
+
+Made entirely in **RISC-V Assembly** by Alexander He Meng.
+
+---
+
+> 💬 Feel free to fork, modify, and play around with the code!
+
