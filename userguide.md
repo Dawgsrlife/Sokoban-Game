@@ -32,12 +32,12 @@ With an internet connection, you can run this game without any additional setup.
 ### Step-by-Step:
 
 1. Visit [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
-   ![CPULator Overview](https://prnt.sc/ykAUEHjLtbk6 "CPULator Overview")
+   ![CPULator Overview](https://prnt.sc/ykAUEHjLtbk6)
 
 2. Load the game:  
    - Click `File > Open...`  
    - Or press `Ctrl + O` (Windows) / `Cmd + O` (Mac)  
-   ![Open File Dialog](https://prnt.sc/45QtQFzSMqtS "Open File")
+   ![Open File Dialog](https://prnt.sc/45QtQFzSMqtS)
 
 3. Select `Sokoban.s` from your computer (suggested: place it in `Downloads`).  
    ![Select File](https://prnt.sc/ZXVqNhfFbUQ2)
