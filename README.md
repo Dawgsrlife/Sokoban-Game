@@ -9,12 +9,22 @@ _Last Updated: October 19th, 2024_
 
 ---
 
+## 🎚 Live Demo
+
+![Demo GIF](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/Live%20Demo%20Gif/demonstration.gif)
+
+---
+
 ## 📚 Overview
 
-> **Sokoban** is a classic puzzle game where you push boxes (`*`) onto target positions (`X`).  
-This project is a **pure RISC-V Assembly** implementation, playable entirely inside CPULator (a browser-based simulator).  
+Sokoban is a classic puzzle game about pushing boxes (`*`) onto target positions (`X`).  
+This project is a **pure RISC-V Assembly** implementation playable entirely online in the CPULator simulator.
 
-💡 No installation, no build system — just run it directly online.
+Features:
+- Push-only box movement.
+- Guaranteed solvable levels.
+- Optional multiplayer mode.
+- Runs fully in your browser.
 
 ---
 
@@ -31,37 +41,37 @@ This project is a **pure RISC-V Assembly** implementation, playable entirely ins
 
 ## 💻 Running the Game
 
-### ✅ Step 1 — Launch Simulator  
+### Step 1 — Launch Simulator  
 Open [CPULator RV32-SPIM](https://cpulator.01xz.net/?sys=rv32-spim)  
 ![Step 1](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/1.png)
 
 ---
 
-### ✅ Step 2 — Open the Source File  
+### Step 2 — Open the Source File  
 Go to `File > Open...` or press `Ctrl + O` / `Cmd + O`.  
 ![Step 2](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/2.png)
 
 ---
 
-### ✅ Step 3 — Load `sokobangame.s`  
+### Step 3 — Load `sokobangame.s`  
 Select your downloaded `sokobangame.s` file.  
 ![Step 3](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/3.png)
 
 ---
 
-### ✅ Step 4 — Compile the Program  
+### Step 4 — Compile the Program  
 Click `Compile and Load` or press `F5`.  
 ![Step 5](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/5.png)
 
 ---
 
-### ✅ Step 5 — Run  
+### Step 5 — Run  
 Click `Continue`.  
 ![Step 6](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/6.png)
 
 ---
 
-### ✅ Step 6 — Start Playing  
+### Step 6 — Start Playing  
 The Terminal will display your game!  
 ![Step 7](https://github.com/Dawgsrlife/Sokoban-Game/blob/main/User%20Guide%20Screenshots/7.png)
 
@@ -101,7 +111,7 @@ Enter the number of players:
 ```
 
 Each player gets the same randomly generated board.  
-The game automatically displays a **leaderboard** at the end.
+A **leaderboard** will automatically appear at the end.
 
 ---
 
@@ -115,28 +125,9 @@ Left, Right, Up, or Down?
 
 ---
 
-## 🏆 Showcase / Demo
-
-Coming soon!  
-Recommended: Use **screen-to-gif** to capture CPULator gameplay for your Devpost demo.
-
----
-
-## ✅ Notes for Devpost
-> If you're submitting:
-- Include screenshots exactly like above
-- Optionally record gameplay
-- Link this README directly under your “Demo / Setup” section
-- Clearly state: "Playable fully online using CPULator (no install needed)"
-
----
-
 ## 🙌 Author
 
 **Alexander He Meng**  
-Email: alex.meng@mail.utoronto.ca  
-GitHub: [github.com/Dawgsrlife](https://github.com/Dawgsrlife)  
+[GitHub](https://github.com/Dawgsrlife) | [LinkedIn](https://linkedin.com/in/alex-he-meng) | alex.meng@mail.utoronto.ca
 
----
-
-> 💬 Contributions, forks, and PRs welcome!
+> 💬 Contributions, forks, and pull requests are welcome!
